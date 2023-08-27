@@ -238,30 +238,28 @@ public class PatternNode {
 	}
 
 	/// <summary>Handles a wildcard node by taking words one by one until a template is found.</summary>
-	private Template? WildcardSearch(RequestSentence subRequest, RequestProcess process, string[] inputPath, int inputPathIndex, bool traceSearch, MatchState matchState, int minimumWords) {
-		int inputPathIndex2;
+	private Template? WildcardSearch(RequestSentence subRequest, RequestProcess process, string[] inputPath, int startIndex, bool traceSearch, MatchState matchState, int minimumWords) {
+		int endIndex;
 		var star = process.GetStarList(matchState);
 		var starIndex = star.Count;
 		// Reserve a space in the star list. If a template is found, this slot will be filled with the matched phrase.
 		// This function can call other wildcards recursively. The reservation ensures that the star list will be populated correctly.
 		star.Add("");
 
-		for (inputPathIndex2 = inputPathIndex + minimumWords; inputPathIndex2 <= inputPath.Length; ++inputPathIndex2) {
-			var result = this.Search(subRequest, process, inputPath, inputPathIndex2, traceSearch, matchState);
+		for (endIndex = startIndex + minimumWords; endIndex <= inputPath.Length; endIndex++) {
+			var result = this.Search(subRequest, process, inputPath, endIndex, traceSearch, matchState);
 			if (result != null) {
-				star[starIndex] = inputPathIndex2 == inputPathIndex
+				star[starIndex] = endIndex == startIndex
 					? process.Bot.Config.DefaultWildcard
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_0_OR_GREATER
-					: string.Join(' ', inputPath, inputPathIndex, inputPathIndex2 - inputPathIndex);
+					: string.Join(' ', inputPath, startIndex, endIndex - startIndex);
 #else
-					: string.Join(" ", inputPath, inputPathIndex, inputPathIndex2 - inputPathIndex);
+					: string.Join(" ", inputPath, startIndex, endIndex - startIndex);
 #endif
 				return result;
 			}
-
-			// Wildcards cannot match these tokens.
-			if ((matchState == MatchState.Message && inputPath[inputPathIndex2] == "<that>") ||
-				(matchState == MatchState.That && inputPath[inputPathIndex2] == "<topic>")) break;
+			if (endIndex >= inputPath.Length || (matchState == MatchState.Message && inputPath[endIndex] == "<that>") || (matchState == MatchState.That && inputPath[endIndex] == "<topic>"))
+				break;  // Wildcards cannot match these tokens.
 		}
 
 		// No match; remove the reserved slot.

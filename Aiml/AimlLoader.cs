@@ -5,8 +5,8 @@ using Aiml.Media;
 
 namespace Aiml;
 public delegate TemplateNode TemplateTagParser(XElement element, AimlLoader loader);
-public delegate string? OobReplacementHandler(XElement element);
-public delegate void OobHandler(XElement element);
+public delegate string? OobReplacementHandler(XElement element, Response response);
+public delegate void OobHandler(XElement element, Response response);
 public delegate IMediaElement MediaElementParser(XElement element, Response response);
 
 public class AimlLoader(Bot bot) {
@@ -108,7 +108,7 @@ public class AimlLoader(Bot bot) {
 			throw new ArgumentException($"A rich media element named <{elementName}> already exists.");
 	}
 
-	public static void AddCustomOobHandler(string elementName, OobHandler handler) => oobHandlers.Add(elementName, el => { handler(el); return null; });
+	public static void AddCustomOobHandler(string elementName, OobHandler handler) => oobHandlers.Add(elementName, (el, r) => { handler(el, r); return null; });
 	public static void AddCustomOobHandler(string elementName, OobReplacementHandler handler) => oobHandlers.Add(elementName, handler);
 
 	public static void AddCustomSraixService(ISraixService service) {

@@ -23,7 +23,7 @@ public class Response(Request request, string text) {
 		var builder = new StringBuilder();
 		foreach (var childElement in element.Elements()) {
 			if (AimlLoader.oobHandlers.TryGetValue(childElement.Name.LocalName, out var handler))
-				builder.Append(handler(childElement));
+				builder.Append(handler(childElement, this));
 			else
 				this.Bot.Log(LogLevel.Warning, $"No handler found for <oob> element <{childElement.Name}>.");
 		}
