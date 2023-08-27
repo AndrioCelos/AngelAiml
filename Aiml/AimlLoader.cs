@@ -206,7 +206,7 @@ public class AimlLoader(Bot bot) {
 			: throw new AimlException($"Not a valid AIML {AimlVersion} tag", el);
 	}
 
-	internal T ParseChildElementInternal<T>(XElement el) => (T) this.ParseChildElementInternal(el, typeof(T));
+	public T ParseChildElement<T>(XElement el) => (T) this.ParseChildElementInternal(el, typeof(T));
 	internal object ParseChildElementInternal(XElement el, Type type) {
 		if (!childElementBuilders.TryGetValue(type, out var builder))
 			builder = childElementBuilders[type] = new(type);

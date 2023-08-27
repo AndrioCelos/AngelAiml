@@ -176,7 +176,7 @@ public sealed class Select : TemplateNode {
 							break;
 						case "q":
 						case "notq":
-							clauses.Add(loader.ParseChildElementInternal<Clause>(childElement));
+							clauses.Add(loader.ParseChildElement<Clause>(childElement));
 							break;
 						default:
 							throw new AimlException($"Invalid child element <{childElement.Name.LocalName}>", element);
