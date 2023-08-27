@@ -15,7 +15,7 @@ internal class AimlVoiceExtension : IAimlExtension {
 		AimlLoader.AddCustomMediaElement("queue", MediaElementType.Block, (_, _) => new PriorityElement());
 	}
 
-	private static void OobPartialInput(XElement element) {
+	private static void OobPartialInput(XElement element, Response response) {
 		Program.SetPartialInput(element.Value.ToLowerInvariant() switch {
 			"off" or "false" or "0" => PartialInputMode.Off,
 			"on" or "true" or "1" => PartialInputMode.On,
@@ -24,13 +24,13 @@ internal class AimlVoiceExtension : IAimlExtension {
 		});
 	}
 
-	private static void OobSetGrammar(XElement element) {
+	private static void OobSetGrammar(XElement element, Response response) {
 		Program.TrySwitchGrammar(element.Value);
 	}
-	private static void OobDisableGrammar(XElement element) {
+	private static void OobDisableGrammar(XElement element, Response response) {
 		Program.TryDisableGrammar(element.Value);
 	}
-	private static void OobEnableGrammar(XElement element) {
+	private static void OobEnableGrammar(XElement element, Response response) {
 		Program.TryEnableGrammar(element.Value);
 	}
 }
