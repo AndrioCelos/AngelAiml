@@ -13,8 +13,8 @@ public class AimlLoaderTests {
 
 	[OneTimeSetUp]
 	public void Init() {
-		AimlLoader.AddCustomOobHandler("testoob", el => oobExecuted++);
-		AimlLoader.AddCustomOobHandler("testoob2", el => "Sample replacement");
+		AimlLoader.AddCustomOobHandler("testoob", (el, r) => oobExecuted++);
+		AimlLoader.AddCustomOobHandler("testoob2", (el, r) => "Sample replacement");
 		AimlLoader.AddCustomTag(typeof(TestCustomTag));
 		AimlLoader.AddCustomTag("custom", typeof(TestCustomTag));
 		AimlLoader.AddCustomTag("custom2", (el, l) => new TestCustomTag(el, new("Hello"), new("world")));

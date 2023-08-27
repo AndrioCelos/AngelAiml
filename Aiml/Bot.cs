@@ -37,6 +37,8 @@ public class Bot {
 
 	public void OnGossip(GossipEventArgs e) => this.Gossip?.Invoke(this, e);
 	public void OnLogMessage(LogMessageEventArgs e) => this.LogMessage?.Invoke(this, e);
+	public void OnPostbackRequest(PostbackRequestEventArgs e) => this.PostbackRequest?.Invoke(this, e);
+	public void OnPostbackResponse(PostbackResponseEventArgs e) => this.PostbackResponse?.Invoke(this, e);
 
 	internal readonly Random Random = new();
 
@@ -280,11 +282,17 @@ public class Bot {
 		request.User.AddResponse(response);
 		return response;
 	}
+	internal Response Chat(Request request, bool trace, bool isPostback) {
+		this.Log(LogLevel.Chat, (isPostback ? "[Postback] " : "") + request.User.ID + ": " + request.Text);
+		request.User.AddRequest(request);
 
-	public Response Postback(Request request) {
-		this.PostbackRequest?.Invoke(this, new(request));
-		var response = this.Chat(request);
-		this.PostbackResponse?.Invoke(this, new(response));
+		var response = this.ProcessRequest(request, trace, false, 0, out _);
+
+		if (!this.Config.BotProperties.TryGetValue("name", out var botName)) botName = "Robot";
+		this.Log(LogLevel.Chat, botName + ": " + response.ToString());
+
+		response.ProcessOobElements();
+		request.User.AddResponse(response);
 		return response;
 	}
 

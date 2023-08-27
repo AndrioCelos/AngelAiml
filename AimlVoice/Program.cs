@@ -117,6 +117,7 @@ public class Program {
 
 		bot = new Bot(botPath);
 		bot.LogMessage += Bot_LogMessage;
+		bot.PostbackResponse += (s, e) => ProcessOutput(e.Response);
 		bot.LoadConfig();
 		bot.LoadAiml();
 
@@ -280,7 +281,7 @@ public class Program {
 		}
 	}
 
-	public static void SendInput(string input) {
+	private static void SendInput(string input) {
 		var trace = false;
 		if (input.StartsWith(".trace ")) {
 			trace = true;

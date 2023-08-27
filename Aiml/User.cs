@@ -54,7 +54,7 @@ public class User {
 	public void AddResponse(Response response) {
 		this.Responses.Add(response);
 		if (!(this.Bot.Config.ThatExcludeEmptyResponse && string.IsNullOrWhiteSpace(response.Text)))
-			this.That = response.Text;
+			this.That = string.IsNullOrWhiteSpace(response.Text) ? this.Bot.Config.DefaultPredicate : response.Text;
 	}
 	public void AddRequest(Request request) => this.Requests.Add(request);
 
@@ -62,4 +62,12 @@ public class User {
 		=> this.Predicates.TryGetValue(key, out var value) || this.Bot.Config.DefaultPredicates.TryGetValue(key, out value)
 			? value
 			: this.Bot.Config.DefaultPredicate;
+
+	public Response Postback(string text) {
+		var request = new Request(text, this, this.Bot);
+		this.Bot.OnPostbackRequest(new(request));
+		var response = this.Bot.Chat(request, false, true);
+		this.Bot.OnPostbackResponse(new(response));
+		return response;
+	}
 }
