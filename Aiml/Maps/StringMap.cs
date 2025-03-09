@@ -8,9 +8,10 @@ namespace Aiml.Maps;
 public class StringMap(IDictionary<string, string> dictionary, IEqualityComparer<string> comparer) : Map, IReadOnlyDictionary<string, string> {
 	private readonly Dictionary<string, string> dictionary = new(dictionary, comparer);
 
-	public override string this[string key] => this.dictionary[key];
+    public override string? this[string key] => this.dictionary.TryGetValue(key, out var value) ? value : null;
+    string IReadOnlyDictionary<string, string>.this[string key] => this.dictionary[key];
 
-	public int Count => ((IReadOnlyCollection<KeyValuePair<string, string>>) this.dictionary).Count;
+    public int Count => this.dictionary.Count;
 	public IEnumerable<string> Keys => this.dictionary.Keys;
 	public IEnumerable<string> Values => this.dictionary.Values;
 

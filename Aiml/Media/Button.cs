@@ -8,10 +8,20 @@ namespace Aiml.Media;
 ///		<para>This element is defined by the AIML 2.1 specification.</para>
 ///	</remarks>
 ///	<seealso cref="Reply"/>
-public class Button(string text, string? postback, string? url) : IMediaElement {
-	public string Text { get; } = text;
-	public string? Postback { get; } = postback;
-	public string? Url { get; } = url;
+public class Button : IMediaElement {
+	public string Text { get; }
+	public string? Postback { get; }
+	public string? Url { get; }
+
+	private Button(string text, string? postback, string? url) {
+		this.Text = text;
+		this.Postback = postback;
+		this.Url = url;
+	}
+	public Button(string text, string postback) : this(text, postback, null) { }
+	public Button(string text, Uri uri) : this(text, null, uri.ToString()) { }
+	public Button(string text) : this(text, text, null) { }
+	public static Button UrlButton(string text, string url) => new(text, null, url);
 
 	public static Button FromXml(XElement element, Response response) {
 		string? text = null, postback = null, url = null;

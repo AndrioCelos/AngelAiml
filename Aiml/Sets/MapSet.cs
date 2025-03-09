@@ -14,6 +14,6 @@ public class MapSet : Set {
 	}
 
 	public override bool Contains(string phrase) => this.Map is Maps.StringMap stringMap
-		? stringMap[phrase] != null
-		: this.Map[phrase] is string s && s != this.Bot.Config.DefaultMap;
+		? stringMap.ContainsKey(phrase)
+		: this.Map[phrase] is string s;
 }

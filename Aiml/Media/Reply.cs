@@ -14,6 +14,8 @@ public class Reply(string text, string postback) : IMediaElement {
 	public string Text { get; } = text;
 	public string Postback { get; } = postback;
 
+	public Reply(string text) : this(text, text) { }
+
 	public static Reply FromXml(XElement element, Response response) {
 		string? text = null, postback = null;
 		foreach (var childElement in element.Elements()) {

@@ -13,7 +13,7 @@ public class Link(string text, string url) : IMediaElement {
 		foreach (var childElement in element.Elements()) {
 			switch (childElement.Name.LocalName.ToLowerInvariant()) {
 				case "text": text = childElement.Value; break;
-				case "url": url = childElement.Value; break;
+				case "url" or "href": url = childElement.Value; break;
 				default: throw new AimlException($"Unknown attribute {childElement.Name}", element);
 			}
 		}
