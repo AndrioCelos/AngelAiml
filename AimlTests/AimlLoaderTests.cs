@@ -153,6 +153,24 @@ public class AimlLoaderTests {
 	}
 
 	[Test]
+	public void LoadAiml_XDocumentWithWhitespace() {
+		var test = new AimlTest();
+		test.Bot.AimlLoader.LoadAiml(XDocument.Parse(@"<?xml version='1.0' encoding='utf-16'?>
+<aiml>
+	<category>
+		<pattern>TEST</pattern>
+		<template>
+			<sr/>
+			<sr/>
+		</template>
+	</category>
+</aiml>", LoadOptions.PreserveWhitespace));
+		var intermediateWhitespaceNode = AimlTest.GetTemplate(test.Bot.Graphmaster, "TEST", "<that>", "*", "<topic>", "*").Content.SkipWhile(t => t is not SR).Skip(1).First();
+		Assert.IsInstanceOf<TemplateText>(intermediateWhitespaceNode);
+		Assert.AreEqual(" ", ((TemplateText) intermediateWhitespaceNode).Text);
+	}
+
+	[Test]
 	public void LoadAiml_XElement() {
 		var test = new AimlTest();
 		test.Bot.AimlLoader.LoadAiml(XElement.Parse(@"

@@ -108,6 +108,8 @@ internal class TemplateElementBuilder {
 			return constructor.Invoke(values);
 		} catch (ArgumentException ex) {
 			throw new AimlException(ex.Message, el, ex);
+		} catch (TargetInvocationException ex) when (ex.InnerException is ArgumentException) {
+			throw new AimlException(ex.InnerException.Message, el, ex.InnerException);
 		}
 	}
 

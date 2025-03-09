@@ -132,7 +132,7 @@ public class AimlLoader(Bot bot) {
 
 	public void LoadAiml(string path) {
 		this.bot.Log(LogLevel.Info, $"Processing AIML file: {path}");
-		var document = XDocument.Load(path, LoadOptions.SetBaseUri | LoadOptions.SetLineInfo);
+		var document = XDocument.Load(path, LoadOptions.SetBaseUri | LoadOptions.SetLineInfo | LoadOptions.PreserveWhitespace);
 		this.LoadAiml(document);
 	}
 	public void LoadAiml(XDocument document)
