@@ -44,6 +44,7 @@ public class AimlLoader(Bot bot) {
 		{ "delay"    , (MediaElementType.Separator, Delay.FromXml, Array.Empty<string>()) },
 		{ "image"    , (MediaElementType.Block, Image.FromXml, Array.Empty<string>()) },
 		{ "img"      , (MediaElementType.Block, Image.FromXml, Array.Empty<string>()) },
+		{ "hidden"   , (MediaElementType.Inline, Hidden.FromXml, Array.Empty<string>()) },
 		{ "hyperlink", (MediaElementType.Inline, Link.FromXml, new[] { "text", "url" }) },
 		{ "link"     , (MediaElementType.Inline, Link.FromXml, new[] { "text", "url" }) },
 		{ "list"     , (MediaElementType.Inline, List.FromXml, new[] { "item", "li" }) },

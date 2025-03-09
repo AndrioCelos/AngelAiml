@@ -50,6 +50,7 @@ public class Bot {
 		// Add predefined sets and maps.
 		var inflector = new Inflector(StringComparer.CurrentCultureIgnoreCase);
 		this.Sets.Add("number", new NumberSet());
+		this.Sets.Add("word", new WordSet());
 		this.Maps.Add("successor", new ArithmeticMap(1));
 		this.Maps.Add("predecessor", new ArithmeticMap(-1));
 		this.Maps.Add("singular", new SingularMap(inflector));
@@ -91,11 +92,10 @@ public class Bot {
 		this.Config.NormalSubstitutions.CompileRegex();
 		this.Config.DenormalSubstitutions.CompileRegex();
 
-		if (Directory.Exists(Path.Combine(this.ConfigDirectory, this.Config.SetsDirectory)))
-			this.LoadSets(Path.Combine(this.ConfigDirectory, this.Config.SetsDirectory));
-
 		if (Directory.Exists(Path.Combine(this.ConfigDirectory, this.Config.MapsDirectory)))
 			this.LoadMaps(Path.Combine(this.ConfigDirectory, this.Config.MapsDirectory));
+		if (Directory.Exists(Path.Combine(this.ConfigDirectory, this.Config.SetsDirectory)))
+			this.LoadSets(Path.Combine(this.ConfigDirectory, this.Config.SetsDirectory));
 
 		this.LoadTriples(Path.Combine(this.ConfigDirectory, "triples.txt"));
 	}
@@ -298,7 +298,7 @@ public class Bot {
 
 	internal Response ProcessRequest(Request request, bool trace, bool useTests, int recursionDepth, out TimeSpan duration) {
 		var stopwatch = Stopwatch.StartNew();
-		var that = this.Normalize(request.User.GetThat());
+		var that = request.User.That;
 		var topic = this.Normalize(request.User.Topic);
 
 		// Respond to each sentence separately.
