@@ -1,5 +1,4 @@
-﻿using System.Xml;
-using System.Xml.Linq;
+﻿using System.Xml.Linq;
 using Aiml;
 
 namespace AimlVoice;
@@ -24,13 +23,7 @@ internal class AimlVoiceExtension : IAimlExtension {
 		});
 	}
 
-	private static void OobSetGrammar(XElement element, Response response) {
-		Program.TrySwitchGrammar(element.Value);
-	}
-	private static void OobDisableGrammar(XElement element, Response response) {
-		Program.TryDisableGrammar(element.Value);
-	}
-	private static void OobEnableGrammar(XElement element, Response response) {
-		Program.TryEnableGrammar(element.Value);
-	}
+	private static void OobSetGrammar(XElement element, Response response) => Program.TrySwitchGrammar(element.Value);
+	private static void OobDisableGrammar(XElement element, Response response) => Program.TryDisableGrammar(element.Value);
+	private static void OobEnableGrammar(XElement element, Response response) => Program.TryEnableGrammar(element.Value);
 }

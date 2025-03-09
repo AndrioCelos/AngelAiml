@@ -3,7 +3,6 @@ using System.Speech.Recognition;
 using System.Speech.Recognition.SrgsGrammar;
 using System.Speech.Synthesis;
 using System.Text;
-using System.Xml;
 using Aiml;
 using Aiml.Media;
 
@@ -16,9 +15,8 @@ public class Program {
 	internal static string progressMessage = "";
 	internal static List<string> enabledGrammarPaths = new();
 	internal static PartialInputMode partialInput;
-	private static readonly Stopwatch partialInputTimeout = Stopwatch.StartNew();
+	private static Stopwatch? partialInputTimeout;
 	private static readonly List<Reply> replies = new();
-	private static readonly Dictionary<string, Reply> repliesByText = new(StringComparer.CurrentCultureIgnoreCase);
 
 	private static readonly Queue<SpeechQueueItem> speechQueue = new();
 
@@ -187,6 +185,7 @@ public class Program {
 
 	public static void SetPartialInput(PartialInputMode partialInputMode) {
 		partialInput = partialInputMode;
+		if (partialInputMode != PartialInputMode.On) partialInputTimeout = null;
 		Console.WriteLine($"Partial input is {partialInput}.");
 	}
 
@@ -220,7 +219,7 @@ public class Program {
 	}
 
 	public static void TryEnableGrammar(string name) {
-		if (!enabledGrammarPaths.Contains(name)) return;
+		if (enabledGrammarPaths.Contains(name)) return;
 		if (!grammars.TryGetValue(name, out var grammar)) {
 			Console.WriteLine($"Could not find requested grammar '{name}'.");
 			return;
@@ -257,10 +256,10 @@ public class Program {
 		WriteMessage($"({e.Result.Text} ... {e.Result.Confidence})");
 		Console.ResetColor();
 
-		if (partialInput != 0 && (partialInput != PartialInputMode.On || partialInputTimeout.Elapsed >= TimeSpan.FromSeconds(3)) && e.Result.Confidence >= 0.25) {
+		if (partialInput != PartialInputMode.Off && (partialInput == PartialInputMode.Continuous || partialInputTimeout == null || partialInputTimeout.Elapsed >= TimeSpan.FromSeconds(3)) && e.Result.Confidence >= 0.25) {
 			var response = bot!.Chat(new Request("PartialInput " + e.Result.Text, user!, bot), false);
 			if (!response.IsEmpty) {
-				partialInputTimeout.Restart();
+				partialInputTimeout = Stopwatch.StartNew();
 				ProcessOutput(response);
 			}
 		}
@@ -273,7 +272,7 @@ public class Program {
 			Console.ForegroundColor = ConsoleColor.Magenta;
 			Console.WriteLine(e.Result.Alternates[0].Text + "    ");
 			Console.ResetColor();
-			if (partialInputTimeout.Elapsed >= TimeSpan.FromSeconds(3))
+			if (partialInputTimeout is null || partialInputTimeout.Elapsed >= TimeSpan.FromSeconds(5))
 				SendInput(e.Result.Alternates[0].Text);
 		} else {
 			WriteMessage(string.Join(" ", e.Result.Alternates.Select(a => $"({a.Text} ...? {a.Confidence})")));
@@ -287,18 +286,19 @@ public class Program {
 			trace = true;
 			input = input[7..];
 		}
-		if (repliesByText.TryGetValue(input, out var reply)) input = reply.Postback;
+		if (replies.FirstOrDefault(r => bot!.Config.StringComparer.Equals(r.Text, input.Trim())) is Reply reply)
+			input = reply.Postback;
 		var response = bot!.Chat(new Request(input, user!, bot), trace);
 		ProcessOutput(response);
 	}
 
 	private static void ProcessOutput(Response response) {
+		if (string.IsNullOrWhiteSpace(response.Text))
+			return;
 		replies.Clear();
-		repliesByText.Clear();
 
 		try {
 			var messages = response.ToMessages();
-			var replyIndex = 0;
 			foreach (var message in messages) {
 				var isPriority = false;
 				var builder = new PromptBuilder(bot!.Config.Locale);
@@ -324,7 +324,6 @@ public class Program {
 					switch (el) {
 						case Reply reply:
 							replies.Add(reply);
-							repliesByText[reply.Text] = reply;
 							break;
 						case PriorityElement:
 							isPriority = true;
@@ -338,11 +337,6 @@ public class Program {
 						Console.ForegroundColor = ConsoleColor.Blue;
 						Console.WriteLine(s);
 					}
-				}
-				if (replies.Count > replyIndex) {
-					Console.ForegroundColor = ConsoleColor.DarkMagenta;
-					Console.WriteLine($"[{(replies.Count - replyIndex == 1 ? "Reply" : "Replies")}: {string.Join(", ", replies.Skip(replyIndex).Select(r => r.Text))}]");
-					replyIndex = replies.Count;
 				}
 				Console.ResetColor();
 				if (Enumerable.Range(0, responseBuilder.Length).Any(i => !char.IsWhiteSpace(responseBuilder[i]))) {
@@ -358,7 +352,6 @@ public class Program {
 					synthesizer!.SpeakAsync(prompt);
 				}
 
-				Console.WriteLine();
 				if (message.Separator is Delay delay) {
 					Console.Write("...");
 					Thread.Sleep(delay.Duration);
@@ -388,9 +381,10 @@ public class Program {
 		Console.ForegroundColor = ConsoleColor.Magenta;
 		Console.WriteLine(e.Result.Text + "     ");
 		Console.ResetColor();
-		if (partialInput == PartialInputMode.Continuous || partialInputTimeout.Elapsed >= TimeSpan.FromSeconds(5))
+		if (partialInput == PartialInputMode.Continuous || partialInputTimeout is null || partialInputTimeout.Elapsed >= TimeSpan.FromSeconds(5))
 			SendInput(e.Result.Text);
-		Console.Write("> ");
+		else
+			partialInputTimeout = null;
 	}
 }
 
