@@ -7,9 +7,9 @@ namespace Aiml.Media;
 public class Carousel : IMediaElement {
 	public IReadOnlyList<Card> Cards { get; }
 
-	public Carousel(List<Card> cards) => this.Cards = cards.AsReadOnly();
-	public Carousel(params Card[] cards) => this.Cards = Array.AsReadOnly(cards);
-	public Carousel(IList<Card> cards) => this.Cards = new ReadOnlyCollection<Card>(cards);
+	public Carousel(List<Card> cards) => Cards = cards.AsReadOnly();
+	public Carousel(params Card[] cards) => Cards = Array.AsReadOnly(cards);
+	public Carousel(IList<Card> cards) => Cards = new ReadOnlyCollection<Card>(cards);
 
 	public static Carousel FromXml(XElement element, Response response) {
 		var cards = new List<Card>();

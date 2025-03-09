@@ -48,21 +48,21 @@ public sealed class Date : TemplateNode {
 	internal static DateTime? mockDateTime;
 
 	public Date(TemplateElementCollection? format, TemplateElementCollection? jformat, TemplateElementCollection? nformat, TemplateElementCollection? locale, TemplateElementCollection? timezone) {
-		this.Format = format;
-		this.JFormat = jformat;
-		this.NFormat = nformat;
-		this.Locale = locale;
-		this.Timezone = timezone;
+		Format = format;
+		JFormat = jformat;
+		NFormat = nformat;
+		Locale = locale;
+		Timezone = timezone;
 		if ((format is not null && (jformat is not null || nformat is not null)) || (jformat is not null && nformat is not null))
 			throw new ArgumentException("<date> element cannot have multiple format attributes.");
 	}
 
 	public override string Evaluate(RequestProcess process) {
-		var format = this.Format?.Evaluate(process);
-		var jformat = this.JFormat?.Evaluate(process);
-		var nformat = this.NFormat?.Evaluate(process);
-		var localeString = this.Locale?.Evaluate(process);
-		var timezone = this.Timezone?.Evaluate(process);
+		var format = Format?.Evaluate(process);
+		var jformat = JFormat?.Evaluate(process);
+		var nformat = NFormat?.Evaluate(process);
+		var localeString = Locale?.Evaluate(process);
+		var timezone = Timezone?.Evaluate(process);
 
 		CultureInfo locale;
 		if (localeString == null)

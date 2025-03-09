@@ -16,14 +16,14 @@ public class Bot {
 	public int Vocabulary {
 		get {
 			if (this.vocabulary is not null) return this.vocabulary.Value;
-			var vocabulary = this.CalculateVocabulary();
+			var vocabulary = CalculateVocabulary();
 			this.vocabulary = vocabulary;
 			return vocabulary;
 		}
 	}
 	public PatternNode Graphmaster { get; } = new(null, StringComparer.CurrentCultureIgnoreCase);
 
-	public Dictionary<string, string> Properties => this.Config.BotProperties;
+	public Dictionary<string, string> Properties => Config.BotProperties;
 	public Dictionary<string, Set> Sets { get; } = new(StringComparer.CurrentCultureIgnoreCase);
 	public Dictionary<string, Map> Maps { get; } = new(StringComparer.CurrentCultureIgnoreCase);
 	public TripleCollection Triples { get; } = new(StringComparer.CurrentCultureIgnoreCase);
@@ -35,83 +35,83 @@ public class Bot {
 	public event EventHandler<PostbackRequestEventArgs>? PostbackRequest;
 	public event EventHandler<PostbackResponseEventArgs>? PostbackResponse;
 
-	public void OnGossip(GossipEventArgs e) => this.Gossip?.Invoke(this, e);
-	public void OnLogMessage(LogMessageEventArgs e) => this.LogMessage?.Invoke(this, e);
-	public void OnPostbackRequest(PostbackRequestEventArgs e) => this.PostbackRequest?.Invoke(this, e);
-	public void OnPostbackResponse(PostbackResponseEventArgs e) => this.PostbackResponse?.Invoke(this, e);
+	public void OnGossip(GossipEventArgs e) => Gossip?.Invoke(this, e);
+	public void OnLogMessage(LogMessageEventArgs e) => LogMessage?.Invoke(this, e);
+	public void OnPostbackRequest(PostbackRequestEventArgs e) => PostbackRequest?.Invoke(this, e);
+	public void OnPostbackResponse(PostbackResponseEventArgs e) => PostbackResponse?.Invoke(this, e);
 
 	internal readonly Random Random = new();
 
 	public Bot() : this("config") { }
 	public Bot(string configDirectory) {
-		this.AimlLoader = new(this);
-		this.ConfigDirectory = configDirectory;
+		AimlLoader = new(this);
+		ConfigDirectory = configDirectory;
 
 		// Add predefined sets and maps.
 		var inflector = new Inflector(StringComparer.CurrentCultureIgnoreCase);
-		this.Sets.Add("number", new NumberSet());
-		this.Sets.Add("word", new WordSet());
-		this.Maps.Add("successor", new ArithmeticMap(1));
-		this.Maps.Add("predecessor", new ArithmeticMap(-1));
-		this.Maps.Add("singular", new SingularMap(inflector));
-		this.Maps.Add("plural", new PluralMap(inflector));
+		Sets.Add("number", new NumberSet());
+		Sets.Add("word", new WordSet());
+		Maps.Add("successor", new ArithmeticMap(1));
+		Maps.Add("predecessor", new ArithmeticMap(-1));
+		Maps.Add("singular", new SingularMap(inflector));
+		Maps.Add("plural", new PluralMap(inflector));
 	}
-	internal Bot(Random random) : this() => this.Random = random;
+	internal Bot(Random random) : this() => Random = random;
 
-	public void LoadAiml() => this.AimlLoader.LoadAimlFiles();
+	public void LoadAiml() => AimlLoader.LoadAimlFiles();
 
 	public void LoadConfig() {
-		this.Config = Config.FromFile(Path.Combine(this.ConfigDirectory, "config.json"));
-		this.LoadConfig2();
+		Config = Config.FromFile(Path.Combine(ConfigDirectory, "config.json"));
+		LoadConfig2();
 	}
 
 	private void LoadConfig2() {
-		this.CheckDefaultProperties();
+		CheckDefaultProperties();
 
-		var inflector = new Inflector(this.Config.StringComparer);
-		this.Maps["singular"] = new SingularMap(inflector);
-		this.Maps["plural"] = new PluralMap(inflector);
+		var inflector = new Inflector(Config.StringComparer);
+		Maps["singular"] = new SingularMap(inflector);
+		Maps["plural"] = new PluralMap(inflector);
 
-		this.Config.GenderSubstitutions = new(this.Config.SubstitutionsPreserveCase);
-		this.Config.PersonSubstitutions = new(this.Config.SubstitutionsPreserveCase);
-		this.Config.Person2Substitutions = new(this.Config.SubstitutionsPreserveCase);
-		this.Config.NormalSubstitutions = new(this.Config.SubstitutionsPreserveCase);
-		this.Config.DenormalSubstitutions = new(this.Config.SubstitutionsPreserveCase);
+		Config.GenderSubstitutions = new(Config.SubstitutionsPreserveCase);
+		Config.PersonSubstitutions = new(Config.SubstitutionsPreserveCase);
+		Config.Person2Substitutions = new(Config.SubstitutionsPreserveCase);
+		Config.NormalSubstitutions = new(Config.SubstitutionsPreserveCase);
+		Config.DenormalSubstitutions = new(Config.SubstitutionsPreserveCase);
 
-		this.Config.LoadPredicates(Path.Combine(this.ConfigDirectory, "botpredicates.json"));
-		this.Config.LoadGender(Path.Combine(this.ConfigDirectory, "gender.json"));
-		this.Config.LoadPerson(Path.Combine(this.ConfigDirectory, "person.json"));
-		this.Config.LoadPerson2(Path.Combine(this.ConfigDirectory, "person2.json"));
-		this.Config.LoadNormal(Path.Combine(this.ConfigDirectory, "normal.json"));
-		this.Config.LoadDenormal(Path.Combine(this.ConfigDirectory, "denormal.json"));
-		this.Config.LoadDefaultPredicates(Path.Combine(this.ConfigDirectory, "predicates.json"));
+		Config.LoadPredicates(Path.Combine(ConfigDirectory, "botpredicates.json"));
+		Config.LoadGender(Path.Combine(ConfigDirectory, "gender.json"));
+		Config.LoadPerson(Path.Combine(ConfigDirectory, "person.json"));
+		Config.LoadPerson2(Path.Combine(ConfigDirectory, "person2.json"));
+		Config.LoadNormal(Path.Combine(ConfigDirectory, "normal.json"));
+		Config.LoadDenormal(Path.Combine(ConfigDirectory, "denormal.json"));
+		Config.LoadDefaultPredicates(Path.Combine(ConfigDirectory, "predicates.json"));
 
-		this.Config.GenderSubstitutions.CompileRegex();
-		this.Config.PersonSubstitutions.CompileRegex();
-		this.Config.Person2Substitutions.CompileRegex();
-		this.Config.NormalSubstitutions.CompileRegex();
-		this.Config.DenormalSubstitutions.CompileRegex();
+		Config.GenderSubstitutions.CompileRegex();
+		Config.PersonSubstitutions.CompileRegex();
+		Config.Person2Substitutions.CompileRegex();
+		Config.NormalSubstitutions.CompileRegex();
+		Config.DenormalSubstitutions.CompileRegex();
 
-		if (Directory.Exists(Path.Combine(this.ConfigDirectory, this.Config.MapsDirectory)))
-			this.LoadMaps(Path.Combine(this.ConfigDirectory, this.Config.MapsDirectory));
-		if (Directory.Exists(Path.Combine(this.ConfigDirectory, this.Config.SetsDirectory)))
-			this.LoadSets(Path.Combine(this.ConfigDirectory, this.Config.SetsDirectory));
+		if (Directory.Exists(Path.Combine(ConfigDirectory, Config.MapsDirectory)))
+			LoadMaps(Path.Combine(ConfigDirectory, Config.MapsDirectory));
+		if (Directory.Exists(Path.Combine(ConfigDirectory, Config.SetsDirectory)))
+			LoadSets(Path.Combine(ConfigDirectory, Config.SetsDirectory));
 
-		this.LoadTriples(Path.Combine(this.ConfigDirectory, "triples.txt"));
+		LoadTriples(Path.Combine(ConfigDirectory, "triples.txt"));
 	}
 
 	private void CheckDefaultProperties() {
-		if (!this.Config.BotProperties.ContainsKey("version"))
-			this.Config.BotProperties.Add("version", Version.ToString(2));
+		if (!Config.BotProperties.ContainsKey("version"))
+			Config.BotProperties.Add("version", Version.ToString(2));
 	}
 
 	private void LoadSets(string directory) {
 		// TODO: Implement remote sets and maps
-		this.Log(LogLevel.Info, "Loading sets from " + directory + ".");
+		Log(LogLevel.Info, "Loading sets from " + directory + ".");
 
 		foreach (var file in Directory.EnumerateFiles(directory, "*.txt")) {
-			if (this.Sets.ContainsKey(Path.GetFileNameWithoutExtension(file))) {
-				this.Log(LogLevel.Warning, "Duplicate set name '" + Path.GetFileNameWithoutExtension(file) + "'.");
+			if (Sets.ContainsKey(Path.GetFileNameWithoutExtension(file))) {
+				Log(LogLevel.Warning, "Duplicate set name '" + Path.GetFileNameWithoutExtension(file) + "'.");
 				continue;
 			}
 
@@ -168,25 +168,25 @@ public class Bot {
 				set.Add(phrase);
 			}
 
-			this.Sets[Path.GetFileNameWithoutExtension(file)] = set.Count == 1 && set[0].StartsWith("map:")
+			Sets[Path.GetFileNameWithoutExtension(file)] = set.Count == 1 && set[0].StartsWith("map:")
 				? new MapSet(set[0][4..], this)
-				: new StringSet(set, this.Config.StringComparer);
-			this.InvalidateVocabulary();
+				: new StringSet(set, Config.StringComparer);
+			InvalidateVocabulary();
 		}
 
-		this.Log(LogLevel.Info, "Loaded " + this.Sets.Count + " set(s).");
+		Log(LogLevel.Info, "Loaded " + Sets.Count + " set(s).");
 	}
 
 	private void LoadMaps(string directory) {
-		this.Log(LogLevel.Info, "Loading maps from " + directory + ".");
+		Log(LogLevel.Info, "Loading maps from " + directory + ".");
 
 		foreach (var file in Directory.EnumerateFiles(directory, "*.txt")) {
-			if (this.Maps.ContainsKey(Path.GetFileNameWithoutExtension(file))) {
-				this.Log(LogLevel.Warning, "Duplicate map name '" + Path.GetFileNameWithoutExtension(file) + "'.");
+			if (Maps.ContainsKey(Path.GetFileNameWithoutExtension(file))) {
+				Log(LogLevel.Warning, "Duplicate map name '" + Path.GetFileNameWithoutExtension(file) + "'.");
 				continue;
 			}
 
-			var map = new Dictionary<string, string>(this.Config.StringComparer);
+			var map = new Dictionary<string, string>(Config.StringComparer);
 
 			var reader = new StreamReader(file);
 			while (true) {
@@ -199,63 +199,63 @@ public class Bot {
 
 				var pos = line.IndexOf(':');
 				if (pos < 0)
-					this.Log(LogLevel.Warning, "Map '" + Path.GetFileNameWithoutExtension(file) + "' contains a badly formatted line: " + line);
+					Log(LogLevel.Warning, "Map '" + Path.GetFileNameWithoutExtension(file) + "' contains a badly formatted line: " + line);
 				else {
 					var key = line[..pos].Trim();
 					var value = line[(pos + 1)..].Trim();
 					if (map.ContainsKey(key))
-						this.Log(LogLevel.Warning, "Map '" + Path.GetFileNameWithoutExtension(file) + "' contains duplicate key '" + key + "'.");
+						Log(LogLevel.Warning, "Map '" + Path.GetFileNameWithoutExtension(file) + "' contains duplicate key '" + key + "'.");
 					else
 						map.Add(key, value);
 				}
 			}
 
-			this.Maps[Path.GetFileNameWithoutExtension(file)] = new StringMap(map, this.Config.StringComparer);
-			this.InvalidateVocabulary();
+			Maps[Path.GetFileNameWithoutExtension(file)] = new StringMap(map, Config.StringComparer);
+			InvalidateVocabulary();
 		}
 
-		this.Log(LogLevel.Info, "Loaded " + this.Maps.Count + " map(s).");
+		Log(LogLevel.Info, "Loaded " + Maps.Count + " map(s).");
 	}
 
 	private void LoadTriples(string filePath) {
 		if (!File.Exists(filePath)) {
-			this.Log(LogLevel.Info, "Triples file (" + filePath + ") was not found.");
+			Log(LogLevel.Info, "Triples file (" + filePath + ") was not found.");
 			return;
 		}
 
-		this.Log(LogLevel.Info, "Loading maps from " + filePath + ".");
+		Log(LogLevel.Info, "Loading maps from " + filePath + ".");
 		using (var reader = new StreamReader(filePath)) {
 			while (!reader.EndOfStream) {
 				var line = reader.ReadLine();
 				if (string.IsNullOrWhiteSpace(line)) continue;
-				var fields = line.Split(new[] { ':' }, 3);
+				var fields = line.Split([':'], 3);
 				if (fields.Length != 3)
-					this.Log(LogLevel.Warning, "triples.txt contains a badly formatted line: " + line);
+					Log(LogLevel.Warning, "triples.txt contains a badly formatted line: " + line);
 				else
-					this.Triples.Add(fields[0], fields[1], fields[2]);
+					Triples.Add(fields[0], fields[1], fields[2]);
 			}
 		}
 
-		this.Log(LogLevel.Info, "Loaded " + this.Triples.Count + " triple(s).");
+		Log(LogLevel.Info, "Loaded " + Triples.Count + " triple(s).");
 	}
 
 	private bool logDirectoryCreated = false;
 	private int? vocabulary;
 
 	public void Log(LogLevel level, string message) {
-		if (level < this.Config.LogLevel) return;
+		if (level < Config.LogLevel) return;
 
 		var e = new LogMessageEventArgs(level, message);
-		this.OnLogMessage(e);
+		OnLogMessage(e);
 		if (e.Handled) return;
 
-		if (!this.logDirectoryCreated) {
-			Directory.CreateDirectory(Path.Combine(this.ConfigDirectory, this.Config.LogDirectory));
-			this.logDirectoryCreated = true;
+		if (!logDirectoryCreated) {
+			Directory.CreateDirectory(Path.Combine(ConfigDirectory, Config.LogDirectory));
+			logDirectoryCreated = true;
 		};
 
 		try {
-			var writer = new StreamWriter(Path.Combine(this.ConfigDirectory, this.Config.LogDirectory, DateTime.Now.ToString("yyyyMMdd") + ".log"), true);
+			var writer = new StreamWriter(Path.Combine(ConfigDirectory, Config.LogDirectory, DateTime.Now.ToString("yyyyMMdd") + ".log"), true);
 			writer.WriteLine(DateTime.Now.ToString("[HH:mm:ss]") + "\t[" + level + "]\t" + message);
 			writer.Close();
 		} catch (IOException) { }
@@ -263,33 +263,33 @@ public class Bot {
 
 	internal void WriteGossip(RequestProcess process, string message) {
 		var e = new GossipEventArgs(message);
-		this.OnGossip(e);
+		OnGossip(e);
 		if (e.Handled) return;
 		process.Log(LogLevel.Gossip, "Gossip from " + process.User.ID + ": " + message);
 	}
 
-	public Response Chat(Request request) => this.Chat(request, false);
+	public Response Chat(Request request) => Chat(request, false);
 	public Response Chat(Request request, bool trace) {
-		this.Log(LogLevel.Chat, request.User.ID + ": " + request.Text);
+		Log(LogLevel.Chat, request.User.ID + ": " + request.Text);
 		request.User.AddRequest(request);
 
-		var response = this.ProcessRequest(request, trace, false, 0, out _);
+		var response = ProcessRequest(request, trace, false, 0, out _);
 
-		if (!this.Config.BotProperties.TryGetValue("name", out var botName)) botName = "Robot";
-		this.Log(LogLevel.Chat, botName + ": " + response.ToString());
+		if (!Config.BotProperties.TryGetValue("name", out var botName)) botName = "Robot";
+		Log(LogLevel.Chat, botName + ": " + response.ToString());
 
 		response.ProcessOobElements();
 		request.User.AddResponse(response);
 		return response;
 	}
 	internal Response Chat(Request request, bool trace, bool isPostback) {
-		this.Log(LogLevel.Chat, (isPostback ? "[Postback] " : "") + request.User.ID + ": " + request.Text);
+		Log(LogLevel.Chat, (isPostback ? "[Postback] " : "") + request.User.ID + ": " + request.Text);
 		request.User.AddRequest(request);
 
-		var response = this.ProcessRequest(request, trace, false, 0, out _);
+		var response = ProcessRequest(request, trace, false, 0, out _);
 
-		if (!this.Config.BotProperties.TryGetValue("name", out var botName)) botName = "Robot";
-		this.Log(LogLevel.Chat, botName + ": " + response.ToString());
+		if (!Config.BotProperties.TryGetValue("name", out var botName)) botName = "Robot";
+		Log(LogLevel.Chat, botName + ": " + response.ToString());
 
 		response.ProcessOobElements();
 		request.User.AddResponse(response);
@@ -299,7 +299,7 @@ public class Bot {
 	internal Response ProcessRequest(Request request, bool trace, bool useTests, int recursionDepth, out TimeSpan duration) {
 		var stopwatch = Stopwatch.StartNew();
 		var that = request.User.That;
-		var topic = this.Normalize(request.User.Topic);
+		var topic = Normalize(request.User.Topic);
 
 		// Respond to each sentence separately.
 		var builder = new StringBuilder();
@@ -315,7 +315,7 @@ public class Bot {
 					process.template = template;
 					process.Log(LogLevel.Diagnostic, $"Input matched user-specific category '{process.Path}'.");
 				} else {
-					template = this.Graphmaster.Search(sentence, process, that, trace);
+					template = Graphmaster.Search(sentence, process, that, trace);
 					if (template != null) {
 						process.template = template;
 						process.Log(LogLevel.Diagnostic, $"Input matched category '{process.Path}' in {template.Uri} line {template.LineNumber}.");
@@ -326,14 +326,14 @@ public class Bot {
 					output = template.Content.Evaluate(process);
 				} else {
 					process.Log(LogLevel.Warning, $"No match for input '{sentence.Text}'.");
-					output = this.Config.DefaultResponse;
+					output = Config.DefaultResponse;
 				}
 			} catch (TimeoutException) {
-				output = this.Config.TimeoutMessage;
+				output = Config.TimeoutMessage;
 			} catch (RecursionLimitException) {
-				output = this.Config.RecursionLimitMessage;
+				output = Config.RecursionLimitMessage;
 			} catch (LoopLimitException) {
-				output = this.Config.LoopLimitMessage;
+				output = Config.LoopLimitMessage;
 			}
 
 			output = output.Trim();
@@ -354,9 +354,9 @@ public class Bot {
 	}
 
 	public string[] SentenceSplit(string text, bool preserveMarks) {
-		if (this.Config.Splitters.Length == 0) {
+		if (Config.Splitters.Length == 0) {
 			var sentence = text.Trim();
-			return sentence != "" ? new[] { text.Trim() } : Array.Empty<string>();
+			return sentence != "" ? [text.Trim()] : [];
 		}
 
 		int sentenceStart = 0, searchFrom = 0;
@@ -364,7 +364,7 @@ public class Bot {
 
 		while (true) {
 			string sentence;
-			var pos2 = text.IndexOfAny(this.Config.Splitters, searchFrom);
+			var pos2 = text.IndexOfAny(Config.Splitters, searchFrom);
 			if (pos2 < 0) {
 				sentence = text[sentenceStart..].Trim();
 				if (sentence != "") sentences.Add(sentence);
@@ -381,21 +381,21 @@ public class Bot {
 			searchFrom = sentenceStart;
 		}
 
-		return sentences.ToArray();
+		return [.. sentences];
 	}
 
-	public string GetProperty(string predicate) => this.Config.BotProperties.GetValueOrDefault(predicate, this.Config.DefaultPredicate);
+	public string GetProperty(string predicate) => Config.BotProperties.GetValueOrDefault(predicate, Config.DefaultPredicate);
 
 	public string Normalize(string text) {
-		text = this.Config.NormalSubstitutions.Apply(text);
+		text = Config.NormalSubstitutions.Apply(text);
 		// Strip sentence delimiters from the end when normalising (from Pandorabots).
 		for (var i = text.Length - 1; i >= 0; --i) {
-			if (!this.Config.Splitters.Contains(text[i])) return text[..(i + 1)];
+			if (!Config.Splitters.Contains(text[i])) return text[..(i + 1)];
 		}
 		return text;
 	}
 
-	public string Denormalize(string text) => this.Config.DenormalSubstitutions.Apply(text);
+	public string Denormalize(string text) => Config.DenormalSubstitutions.Apply(text);
 
 	private int CalculateVocabulary() {
 		static void TraversePatternNode(ICollection<string> words, PatternNode node) {
@@ -406,9 +406,9 @@ public class Bot {
 			}
 		}
 
-		var words = new HashSet<string>(this.Config.StringComparer);
-		TraversePatternNode(words, this.Graphmaster);
-		foreach (var set in this.Sets.Values) {
+		var words = new HashSet<string>(Config.StringComparer);
+		TraversePatternNode(words, Graphmaster);
+		foreach (var set in Sets.Values) {
 			switch (set) {
 				case StringSet stringSet:
 					foreach (var entry in stringSet) {
@@ -427,5 +427,5 @@ public class Bot {
 		return words.Count;
 	}
 
-	internal void InvalidateVocabulary() => this.vocabulary = null;
+	internal void InvalidateVocabulary() => vocabulary = null;
 }

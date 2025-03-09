@@ -13,13 +13,13 @@ public sealed class LearnF : TemplateNode {
 	public XElement Element { get; private set; }
 
 	public LearnF(XElement el) {
-		this.Element = el;
+		Element = el;
 		Learn.ValidateLearnElement(el);
 	}
 
 	public override string Evaluate(RequestProcess process) {
 		// Evaluate <eval> tags.
-		var el = new XElement(this.Element);
+		var el = new XElement(Element);
 		Learn.ProcessXml(el, process);
 
 		// Learn the result.

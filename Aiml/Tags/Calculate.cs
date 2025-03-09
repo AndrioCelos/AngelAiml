@@ -49,7 +49,7 @@ namespace Aiml.Tags;
 /// </remarks>
 public sealed class Calculate(TemplateElementCollection children) : RecursiveTemplateTag(children) {
 	public override string Evaluate(RequestProcess process) {
-		var s = this.EvaluateChildren(process);
+		var s = EvaluateChildren(process);
 		if (string.IsNullOrWhiteSpace(s)) {
 			process.Log(LogLevel.Warning, "In element <calculate>: syntax error: " + s);
 			return "unknown";

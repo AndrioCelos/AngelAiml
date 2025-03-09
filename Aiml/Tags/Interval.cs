@@ -39,15 +39,15 @@ public sealed class Interval(TemplateElementCollection? jformat, TemplateElement
 	public TemplateElementCollection Style { get; set; } = style;
 
 	public override string Evaluate(RequestProcess process) {
-		var jformat = this.JFormat?.Evaluate(process);
+		var jformat = JFormat?.Evaluate(process);
 
 		// Parse the dates.
-		if (!TryParseDate(process, this.Start.Evaluate(process), jformat, out var start)
-			|| !TryParseDate(process, this.End.Evaluate(process), jformat, out var end))
+		if (!TryParseDate(process, Start.Evaluate(process), jformat, out var start)
+			|| !TryParseDate(process, End.Evaluate(process), jformat, out var end))
 			return "unknown";
 
 		// Output the result.
-		var unit = this.Style.Evaluate(process);
+		var unit = Style.Evaluate(process);
 		switch (unit) {
 			case "milliseconds": return ((long) (end - start).TotalMilliseconds).ToString();
 			case "seconds"     : return ((long) (end - start).TotalSeconds).ToString();

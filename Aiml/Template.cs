@@ -9,7 +9,7 @@ public class Template(TemplateElementCollection content, string? uri, int lineNu
 	public IList<Tags.Test> GetTests() {
 		var tests = new List<Tags.Test>();
 		var collections = new Queue<TemplateElementCollection>();
-		collections.Enqueue(this.Content);
+		collections.Enqueue(Content);
 		while (collections.Count > 0) {
 			var collection = collections.Dequeue();
 			foreach (var child in collection) {

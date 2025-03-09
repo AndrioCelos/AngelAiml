@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace Aiml;
 public class SubstitutionList : IList<Substitution> {
-	private readonly List<Substitution> substitutions = new();
+	private readonly List<Substitution> substitutions = [];
 	private Regex? regex;
 	private readonly bool preserveCase;
 
@@ -16,10 +16,10 @@ public class SubstitutionList : IList<Substitution> {
 	public SubstitutionList(bool preserveCase) => this.preserveCase = preserveCase;
 
 	public Substitution this[int index] {
-		get => this.substitutions[index];
+		get => substitutions[index];
 		set {
-			this.substitutions[index] = value;
-			this.regex = null;
+			substitutions[index] = value;
+			regex = null;
 		}
 	}
 
@@ -29,7 +29,7 @@ public class SubstitutionList : IList<Substitution> {
 	public void CompileRegex() {
 		var groupIndex = 1;
 		var builder = new StringBuilder("(");
-		foreach (var item in this.substitutions) {
+		foreach (var item in substitutions) {
 			item.groupIndex = groupIndex;
 			if (builder.Length != 1) builder.Append(")|(");
 			builder.Append(item.Pattern);
@@ -43,14 +43,14 @@ public class SubstitutionList : IList<Substitution> {
 			}
 		}
 		builder.Append(')');
-		this.regex = new Regex(builder.ToString(), RegexOptions.Compiled | RegexOptions.IgnoreCase);
+		regex = new Regex(builder.ToString(), RegexOptions.Compiled | RegexOptions.IgnoreCase);
 	}
 
 	public string Apply(string text) {
-		if (this.substitutions.Count == 0) return text;
-		if (this.regex == null) this.CompileRegex();
-		return this.regex!.Replace(text, match => {
-			foreach (var substitution in this.substitutions) {
+		if (substitutions.Count == 0) return text;
+		if (regex == null) CompileRegex();
+		return regex!.Replace(text, match => {
+			foreach (var substitution in substitutions) {
 				if (match.Groups[substitution.groupIndex].Success) {
 					var replacement = substitution.Replacement;
 
@@ -73,7 +73,7 @@ public class SubstitutionList : IList<Substitution> {
 					if (substitution.startSpace && !match.Value.StartsWith(" ")) replacement = replacement.TrimStart();
 					if (substitution.endSpace   && !match.Value.EndsWith(" ")  ) replacement = replacement.TrimEnd();
 
-					if (this.preserveCase) {
+					if (preserveCase) {
 						if (char.IsUpper(match.Value.FirstOrDefault(char.IsLetter))) {
 							if (match.Value.Where(char.IsLetter).All(char.IsUpper)) {
 								// Uppercase
@@ -99,40 +99,40 @@ public class SubstitutionList : IList<Substitution> {
 		});
 	}
 
-	public int Count => this.substitutions.Count;
+	public int Count => substitutions.Count;
 	public bool IsReadOnly => false;
 
 	public void Add(Substitution item) {
-		this.substitutions.Add(item);
-		this.regex = null;
+		substitutions.Add(item);
+		regex = null;
 	}
 	public void AddRange(IEnumerable<Substitution> items) {
-		this.substitutions.AddRange(items);
-		this.regex = null;
+		substitutions.AddRange(items);
+		regex = null;
 	}
 	public void Insert(int index, Substitution item) {
-		this.substitutions.Insert(index, item);
-		this.regex = null;
+		substitutions.Insert(index, item);
+		regex = null;
 	}
 	public bool Remove(Substitution item) {
-		var result = this.substitutions.Remove(item);
-		if (result) this.regex = null;
+		var result = substitutions.Remove(item);
+		if (result) regex = null;
 		return result;
 	}
 	public void RemoveAt(int index) {
-		this.substitutions.RemoveAt(index);
-		this.regex = null;
+		substitutions.RemoveAt(index);
+		regex = null;
 	}
 	public void Clear() {
-		this.substitutions.Clear();
-		this.regex = null;
+		substitutions.Clear();
+		regex = null;
 	}
 
-	public bool Contains(Substitution item) => this.substitutions.Contains(item);
-	public void CopyTo(Substitution[] array, int arrayIndex) => this.substitutions.CopyTo(array, arrayIndex);
-	public IEnumerator<Substitution> GetEnumerator() => this.substitutions.GetEnumerator();
-	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-	public int IndexOf(Substitution item) => this.substitutions.IndexOf(item);
+	public bool Contains(Substitution item) => substitutions.Contains(item);
+	public void CopyTo(Substitution[] array, int arrayIndex) => substitutions.CopyTo(array, arrayIndex);
+	public IEnumerator<Substitution> GetEnumerator() => substitutions.GetEnumerator();
+	IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+	public int IndexOf(Substitution item) => substitutions.IndexOf(item);
 }
 
 [JsonArray, JsonConverter(typeof(Config.SubstitutionConverter))]
@@ -145,23 +145,23 @@ public class Substitution {
 	internal bool endSpace;
 
 	public Substitution(string original, string replacement, bool regex) {
-		this.IsRegex = regex;
+		IsRegex = regex;
 		if (regex) {
-			this.Pattern = original.Trim();
-			this.Replacement = replacement;
+			Pattern = original.Trim();
+			Replacement = replacement;
 		} else {
-			this.Pattern = Regex.Escape(original.Trim());
-			this.Replacement = replacement.Replace("$", "$$");
+			Pattern = Regex.Escape(original.Trim());
+			Replacement = replacement.Replace("$", "$$");
 		}
 		// Spaces surrounding the pattern indicate word boundaries.
 		if (original.StartsWith(" ")) {
 			// If there's a space there, it will match the space. If there isn't a space there, such as if it overlaps a previous substitution, it will still match.
-			this.Pattern = @"(?: |(?<!\S))" + this.Pattern;
-			if (replacement.StartsWith(" ")) this.startSpace = true;
+			Pattern = @"(?: |(?<!\S))" + Pattern;
+			if (replacement.StartsWith(" ")) startSpace = true;
 		}
 		if (original.EndsWith(" ")) {
-			this.Pattern += @"(?: |(?!\S))";
-			if (replacement.EndsWith(" ")) this.endSpace = true;
+			Pattern += @"(?: |(?!\S))";
+			if (replacement.EndsWith(" ")) endSpace = true;
 		}
 	}
 	public Substitution(string original, string replacement) : this(original, replacement, false) { }

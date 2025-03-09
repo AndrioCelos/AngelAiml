@@ -23,5 +23,5 @@ public class Clause(TemplateElementCollection subj, TemplateElementCollection pr
 	public Clause(XElement el, TemplateElementCollection subj, TemplateElementCollection pred, TemplateElementCollection obj) : this(subj, pred, obj, el.Name.LocalName.Equals("q", StringComparison.OrdinalIgnoreCase)) { }
 
 	internal (string subj, string pred, string obj, bool affirm) Evaluate(RequestProcess process)
-		=> (this.Subject.Evaluate(process), this.Predicate.Evaluate(process), this.Object.Evaluate(process), this.Affirm);
+		=> (Subject.Evaluate(process), Predicate.Evaluate(process), Object.Evaluate(process), Affirm);
 }

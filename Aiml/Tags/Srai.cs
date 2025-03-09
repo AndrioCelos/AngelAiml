@@ -8,7 +8,7 @@ namespace Aiml.Tags;
 /// <seealso cref="SR"/><seealso cref="SraiX"/>
 public sealed class Srai(TemplateElementCollection children) : RecursiveTemplateTag(children) {
 	public override string Evaluate(RequestProcess process) {
-		var text = this.EvaluateChildren(process);
+		var text = EvaluateChildren(process);
 		process.Log(LogLevel.Diagnostic, $"In element <srai>: processing text '{text}'.");
 		text = process.Srai(text);
 		process.Log(LogLevel.Diagnostic, $"In element <srai>: the request returned '{text}'.");

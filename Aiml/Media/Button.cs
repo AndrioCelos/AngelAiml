@@ -14,9 +14,9 @@ public class Button : IMediaElement {
 	public string? Url { get; }
 
 	private Button(string text, string? postback, string? url) {
-		this.Text = text;
-		this.Postback = postback;
-		this.Url = url;
+		Text = text;
+		Postback = postback;
+		Url = url;
 	}
 	public Button(string text, string postback) : this(text, postback, null) { }
 	public Button(string text, Uri uri) : this(text, null, uri.ToString()) { }

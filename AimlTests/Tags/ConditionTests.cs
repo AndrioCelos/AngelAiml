@@ -34,12 +34,12 @@ public class ConditionTests {
 
 	[Test]
 	public void ParseType2WithName() {
-		var tag = new Condition(name: new("foo"), var: null, value: null, items: new Condition.Li[] {
+		var tag = new Condition(name: new("foo"), var: null, value: null, items: [
 			new(name: new("baz"), var: null, value: new("value 1"), children: new("match 1")),
 			new(name: null, var: new("bar"), value: new("value 2"), children: new("match 2")),
 			new(new("value 3"), new("match 3")),
 			new(new("match 4"))
-		}, children: TemplateElementCollection.Empty);
+		], children: TemplateElementCollection.Empty);
 		Assert.AreEqual(4, tag.Items.Count);
 
 		Assert.AreEqual("baz", tag.Items[0].Key?.ToString());
@@ -64,12 +64,12 @@ public class ConditionTests {
 
 	[Test]
 	public void ParseType2WithVar() {
-		var tag = new Condition(name: null, var: new("foo"), value: null, items: new Condition.Li[] {
+		var tag = new Condition(name: null, var: new("foo"), value: null, items: [
 			new(name: new("baz"), var: null, value: new("value 1"), children: new("match 1")),
 			new(name: null, var: new("bar"), value: new("value 2"), children: new("match 2")),
 			new(new("value 3"), new("match 3")),
 			new(new("match 4"))
-		}, children: TemplateElementCollection.Empty);
+		], children: TemplateElementCollection.Empty);
 		Assert.AreEqual(4, tag.Items.Count);
 
 		Assert.AreEqual("baz", tag.Items[0].Key?.ToString());
@@ -94,11 +94,11 @@ public class ConditionTests {
 
 	[Test]
 	public void ParseType3() {
-		var tag = new Condition(name: null, var: null, value: null, items: new Condition.Li[] {
+		var tag = new Condition(name: null, var: null, value: null, items: [
 			new(name: new("baz"), var: null, value: new("value 1"), children: new("match 1")),
 			new(name: null, var: new("bar"), value: new("value 2"), children: new("match 2")),
 			new(new("match 3"))
-		}, children: TemplateElementCollection.Empty);
+		], children: TemplateElementCollection.Empty);
 		Assert.AreEqual(3, tag.Items.Count);
 
 		Assert.AreEqual("baz", tag.Items[0].Key?.ToString());
@@ -118,10 +118,10 @@ public class ConditionTests {
 
 	[Test]
 	public void ParseWithLiAfterDefault() {
-		Assert.Throws<ArgumentException>(() => new Condition(name: null, var: null, value: null, items: new Condition.Li[] {
+		Assert.Throws<ArgumentException>(() => new Condition(name: null, var: null, value: null, items: [
 			new(new("match 2")),
 			new(name: new("baz"), var: null, value: new("value 1"), children: new("match 1"))
-		}, children: TemplateElementCollection.Empty));
+		], children: TemplateElementCollection.Empty));
 	}
 
 	[Test]
@@ -146,9 +146,9 @@ public class ConditionTests {
 
 	[Test]
 	public void ParseType3WithNoValue() {
-		Assert.Throws<ArgumentException>(() => new Condition(name: null, var: null, value: null, items: new Condition.Li[] {
+		Assert.Throws<ArgumentException>(() => new Condition(name: null, var: null, value: null, items: [
 			new(name: new("foo"), var: null, value: null, children: TemplateElementCollection.Empty)
-		}, children: TemplateElementCollection.Empty));
+		], children: TemplateElementCollection.Empty));
 	}
 
 	[Test]
@@ -207,46 +207,46 @@ public class ConditionTests {
 
 	[Test]
 	public void EvaluateWithSingleMatch() {
-		var tag = new Condition(new Condition.Li[] { new(new("foo"), false, new("predicate"), new("match")) });
+		var tag = new Condition([new(new("foo"), false, new("predicate"), new("match"))]);
 		Assert.AreEqual("match", tag.Evaluate(GetTest().RequestProcess));
 	}
 
 	[Test]
 	public void EvaluateWithLoop() {
-		var tag = new Condition(new Condition.Li[] {
+		var tag = new Condition([
 			new(new("n"), true, new("0"), TemplateElementCollection.Empty),
 			new(null, false, null, new(
 				new Aiml.Tags.Set(new("n"), true, new(new Aiml.Tags.Map(new("predecessor"), new(new Get(new("n"), null, true))))),
 				new Loop()
 			))
-		});
+		]);
 		Assert.AreEqual("210", tag.Evaluate(GetTest().RequestProcess));
 	}
 
 	[Test]
 	public void EvaluateWithLoopType1() {
-		var tag = new Condition(new Condition.Li[] {
+		var tag = new Condition([
 			new(new("n"), true, new("3"), new(
 				new Aiml.Tags.Set(new("n"), true, new(new Aiml.Tags.Map(new("predecessor"), new(new Get(new("n"), null, true))))),
 				new Loop()
 			))
-		});
+		]);
 		Assert.AreEqual("2", tag.Evaluate(GetTest().RequestProcess));
 	}
 
 	[Test]
 	public void EvaluateWithInfiniteLoop() {
 		var test = new AimlTest();
-		var tag = new Condition(new Condition.Li[] {
+		var tag = new Condition([
 			new(new("n"), true, new("0"), TemplateElementCollection.Empty),
 			new(null, false, null, new(new Loop()))
-		});
+		]);
 		Assert.Throws<LoopLimitException>(() => test.AssertWarning(() => tag.Evaluate(test.RequestProcess)));
 	}
 
 	[Test]
 	public void EvaluateWithNoMatch() {
-		var tag = new Condition(new Condition.Li[] { new(new("foo"), false, new("var"), new("match")) });
+		var tag = new Condition([new(new("foo"), false, new("var"), new("match"))]);
 		Assert.IsEmpty(tag.Evaluate(GetTest().RequestProcess));
 	}
 }

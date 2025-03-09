@@ -3,7 +3,7 @@
 /// <remarks>This element is defined by the AIML 2.0 specification.</remarks>
 public sealed class Explode(TemplateElementCollection children) : RecursiveTemplateTag(children) {
 	public override string Evaluate(RequestProcess process) {
-		var value = this.EvaluateChildren(process);
+		var value = EvaluateChildren(process);
 #if NET5_0_OR_GREATER || NETSTANDARD2_1_OR_GREATER
 		return string.Join(' ', value.Where(char.IsLetterOrDigit));
 #else

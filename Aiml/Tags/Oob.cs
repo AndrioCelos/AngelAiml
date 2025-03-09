@@ -10,18 +10,18 @@ namespace Aiml.Tags;
 ///			Rich media elements are defined by the AIML 2.1 draft specification.</para>
 /// </remarks>
 public sealed class Oob(string name, IEnumerable<XAttribute> attributes, TemplateElementCollection children) : RecursiveTemplateTag(children) {
-	private readonly XAttribute[] attributes = attributes.ToArray();
+	private readonly XAttribute[] attributes = [.. attributes];
 
 	public string Name { get; } = name;
-	public IReadOnlyList<XAttribute> Attributes => Array.AsReadOnly(this.attributes);
+	public IReadOnlyList<XAttribute> Attributes => Array.AsReadOnly(attributes);
 
 	public override string Evaluate(RequestProcess process) {
 		var builder = new StringBuilder();
 		using var writer = XmlWriter.Create(builder, new() { OmitXmlDeclaration = true });
-		writer.WriteStartElement(this.Name);
-		foreach (var attr in this.attributes)
+		writer.WriteStartElement(Name);
+		foreach (var attr in attributes)
 			writer.WriteAttributeString(attr.Name.LocalName, attr.Value);
-		writer.WriteRaw(this.EvaluateChildren(process));
+		writer.WriteRaw(EvaluateChildren(process));
 		writer.WriteEndElement();
 		writer.Flush();
 		return builder.ToString();
@@ -49,6 +49,6 @@ public sealed class Oob(string name, IEnumerable<XAttribute> attributes, Templat
 			}
 		}
 		loader.ForwardCompatible = oldFC;
-		return new Oob(el.Name.LocalName, el.Attributes(), new TemplateElementCollection(children));
+		return new Oob(el.Name.LocalName, el.Attributes(), new(children));
 	}
 }

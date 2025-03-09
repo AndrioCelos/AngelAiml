@@ -17,5 +17,5 @@ public sealed class Input(TemplateElementCollection? index) : TemplateNode {
 	public TemplateElementCollection? Index { get; set; } = index;
 
 	public override string Evaluate(RequestProcess process)
-		=> TryParseIndex("input", process, this.Index, out var index) ? process.User.GetInput(index) : process.Bot.Config.DefaultHistory;
+		=> TryParseIndex("input", process, Index, out var index) ? process.User.GetInput(index) : process.Bot.Config.DefaultHistory;
 }

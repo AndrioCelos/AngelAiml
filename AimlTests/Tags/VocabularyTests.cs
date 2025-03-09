@@ -24,7 +24,7 @@ public class VocabularyTests {
 		<template>Hello world!</template>
 	</category>
 </aiml>"));
-		test.Bot.Sets["testset"] = new StringSet(new[] { "A", "B", "C D" }, test.Bot.Config.StringComparer);
+		test.Bot.Sets["testset"] = new StringSet(["A", "B", "C D"], test.Bot.Config.StringComparer);
 
 		var tag = new Vocabulary();
 		Assert.AreEqual("7", tag.Evaluate(test.RequestProcess));

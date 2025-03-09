@@ -14,5 +14,5 @@ namespace Aiml.Tags;
 public sealed class Bot(TemplateElementCollection name) : TemplateNode {
 	public TemplateElementCollection Name { get; private set; } = name;
 
-	public override string Evaluate(RequestProcess process) => process.Bot.GetProperty(this.Name.Evaluate(process));
+	public override string Evaluate(RequestProcess process) => process.Bot.GetProperty(Name.Evaluate(process));
 }

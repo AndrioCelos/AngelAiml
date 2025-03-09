@@ -95,7 +95,7 @@ internal class Program {
 			replies = null;
 			foreach (var message in messages) {
 				if (message.BlockElements.OfType<Reply>().Any()) {
-					replies ??= new();
+					replies ??= [];
 					Console.ForegroundColor = ConsoleColor.DarkMagenta;
 					Console.WriteLine($"[Replies (type /number to reply): {string.Join(", ", message.BlockElements.OfType<Reply>().Select(r => {
 						var s = $"({replies.Count}) {r.Text}";

@@ -36,17 +36,17 @@ public sealed class Test(string name, TemplateElementCollection expectedResponse
 	}
 
 	public override string Evaluate(RequestProcess process) {
-		process.Log(LogLevel.Info, $"In element <test>: running test {this.Name}");
-		var text = this.EvaluateChildren(process);
+		process.Log(LogLevel.Info, $"In element <test>: running test {Name}");
+		var text = EvaluateChildren(process);
 		process.Log(LogLevel.Diagnostic, $"In element <test>: processing text '{text}'.");
 		var newRequest = new Aiml.Request(text, process.User, process.Bot);
 		text = process.Bot.ProcessRequest(newRequest, false, false, process.RecursionDepth + 1, out var duration).ToString().Trim();
 		process.Log(LogLevel.Diagnostic, $"In element <test>: the request returned '{text}'.");
 
 		if (process.testResults != null) {
-			var expectedResponse = this.ExpectedResponse.Evaluate(process).Trim();
+			var expectedResponse = ExpectedResponse.Evaluate(process).Trim();
 			TestResult result;
-			if (this.UseRegex) {
+			if (UseRegex) {
 				var pattern = Regex.Replace(expectedResponse, @"\s+", @"\s+");
 				try {
 					var regex = new Regex(pattern, RegexOptions.IgnoreCase, TimeSpan.FromSeconds(5));
@@ -65,7 +65,7 @@ public sealed class Test(string name, TemplateElementCollection expectedResponse
 					? TestResult.Pass(duration)
 					: TestResult.Failure($"Expected response: {expectedResponse}\nActual response: {text}", duration);
 			}
-			process.testResults[this.Name] = result;
+			process.testResults[Name] = result;
 		} else
 			process.Log(LogLevel.Warning, "In element <test>: Tests are not being used.");
 

@@ -3,5 +3,5 @@ namespace Aiml.Tags;
 /// <remarks>This element is defined by the AIML 1.1 specification.</remarks>
 /// <seealso cref="Formal"/><seealso cref="Lowercase"/><seealso cref="Sentence"/>
 public sealed class Uppercase(TemplateElementCollection children) : RecursiveTemplateTag(children) {
-	public override string Evaluate(RequestProcess process) => this.EvaluateChildren(process).ToUpper();
+	public override string Evaluate(RequestProcess process) => EvaluateChildren(process).ToUpper();
 }

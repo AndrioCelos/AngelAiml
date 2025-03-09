@@ -7,7 +7,7 @@ public class HistoryItem {
 	public IReadOnlyList<string> Sentences { get; }
 
 	internal HistoryItem(string text, IList<string> sentences) {
-		this.Text = text;
-		this.Sentences = new ReadOnlyCollection<string>(sentences);
+		Text = text;
+		Sentences = new ReadOnlyCollection<string>(sentences);
 	}
 }

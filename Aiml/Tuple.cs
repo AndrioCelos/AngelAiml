@@ -3,16 +3,11 @@
 namespace Aiml;
 /// <summary>Represents a set of variable bindings in the process of resolving a <see cref="Tags.Select"/> query.</summary>
 /// <remarks>This class is represented as a singly-linked list.</remarks>
-public class Tuple : IEnumerable<KeyValuePair<string, string>> {
-	public string Key { get; }
-	public string Value { get; }
-	public Tuple? Next { get; }
+public class Tuple(string key, string value, Tuple? next) : IEnumerable<KeyValuePair<string, string>> {
+	public string Key { get; } = key;
+	public string Value { get; } = value;
+	public Tuple? Next { get; } = next;
 
-	public Tuple(string key, string value, Tuple? next) {
-		this.Key = key;
-		this.Value = value;
-		this.Next = next;
-	}
 	public Tuple(string key, string value) : this(key, value, null) { }
 
 	public string? this[string key] {
@@ -60,5 +55,5 @@ public class Tuple : IEnumerable<KeyValuePair<string, string>> {
 			tuple = tuple.Next;
 		} while (tuple != null);
 	}
-	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+	IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }

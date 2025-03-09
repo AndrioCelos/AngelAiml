@@ -19,7 +19,7 @@ public class Card(string? imageUrl, string? title, string? subtitle, List<Button
 				case "title": title = childElement.Value; break;
 				case "subtitle": subtitle = childElement.Value; break;
 				case "button":
-					buttons ??= new();
+					buttons ??= [];
 					buttons.Add(Button.FromXml(childElement, response));
 					break;
 				default: throw new AimlException($"Unknown attribute {childElement.Name}", element);

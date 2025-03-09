@@ -39,7 +39,7 @@ public sealed class Condition : TemplateNode {
 
 	[AimlLoaderContructor]
 	public Condition(TemplateElementCollection? name, TemplateElementCollection? var, TemplateElementCollection? value, Li[] items, TemplateElementCollection children)
-		: this(name ?? var, var is not null, items.Length > 0 ? items : new[] { new Li(value ?? throw new ArgumentException("<condition> element without <li> items must have a 'value' attribute.", nameof(value)), children) }) {
+		: this(name ?? var, var is not null, items.Length > 0 ? items : [new Li(value ?? throw new ArgumentException("<condition> element without <li> items must have a 'value' attribute.", nameof(value)), children)]) {
 		if (name is not null && var is not null)
 			throw new ArgumentException("<condition> element cannot have both 'name' and 'var' attributes.");
 		if (name is null && var is null && items.Length == 0)
@@ -60,12 +60,12 @@ public sealed class Condition : TemplateNode {
 				throw new ArgumentException("<condition> element or a non-default <li> item must have a value attribute.", nameof(items));
 		}
 		this.items = items;
-		this.Items = new ReadOnlyCollection<Li>(items);
+		Items = new ReadOnlyCollection<Li>(items);
 	}
 	public Condition(Li[] items) : this(null, false, items) { }
 
 	public Li? Pick(RequestProcess process) {
-		foreach (var item in this.items) {
+		foreach (var item in items) {
 			var key = item.Key?.Evaluate(process);
 			var checkValue = item.Value?.Evaluate(process);
 
@@ -120,7 +120,7 @@ public sealed class Condition : TemplateNode {
 				throw new LoopLimitException();
 			}
 
-			item = this.Pick(process);
+			item = Pick(process);
 			if (item is null) break;
 			builder.Append(item.Evaluate(process));
 		} while (item.Children.Loop);
@@ -141,6 +141,6 @@ public sealed class Condition : TemplateNode {
 		public Li(TemplateElementCollection value, TemplateElementCollection children) : this(null, false, value, children) { }
 		public Li(TemplateElementCollection children) : this(null, false, null, children) { }
 
-		public override string Evaluate(RequestProcess process) => this.EvaluateChildren(process);
+		public override string Evaluate(RequestProcess process) => EvaluateChildren(process);
 	}
 }

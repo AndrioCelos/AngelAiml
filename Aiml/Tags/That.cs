@@ -16,9 +16,9 @@ public sealed class That(TemplateElementCollection? index) : TemplateNode {
 	public TemplateElementCollection? Index { get; set; } = index;
 
 	public override string Evaluate(RequestProcess process) {
-		if (this.Index is null) return process.User.That;
+		if (Index is null) return process.User.That;
 
-		var indices = this.Index.Evaluate(process);
+		var indices = Index.Evaluate(process);
 #if NET5_0_OR_GREATER
 		var fields = indices.Split(',', StringSplitOptions.TrimEntries);
 #else

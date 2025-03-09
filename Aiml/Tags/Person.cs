@@ -7,7 +7,7 @@ namespace Aiml.Tags;
 /// <seealso cref="Person2"/>
 public sealed class Person(TemplateElementCollection children) : RecursiveTemplateTag(children) {
 	public override string Evaluate(RequestProcess process) {
-		var text = this.EvaluateChildrenOrStar(process);
+		var text = EvaluateChildrenOrStar(process);
 		return process.Bot.Config.PersonSubstitutions.Apply(text);
 	}
 }

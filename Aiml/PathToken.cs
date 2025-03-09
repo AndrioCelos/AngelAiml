@@ -11,5 +11,5 @@ public class PathToken(string text, bool isSet) {
 
 	public PathToken(string text) : this(text, false) { }
 
-	public override string ToString() => this.IsSet ? $"<set>{this.Text}</set>" : this.Text;
+	public override string ToString() => IsSet ? $"<set>{Text}</set>" : Text;
 }

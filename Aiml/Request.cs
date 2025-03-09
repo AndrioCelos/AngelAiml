@@ -8,24 +8,24 @@ public class Request {
 	public IReadOnlyList<RequestSentence> Sentences { get; }
 
 	public Request(string text, User user, Bot bot) {
-		this.Text = text;
-		this.User = user;
-		this.Bot = bot;
+		Text = text;
+		User = user;
+		Bot = bot;
 
 		var sentences = bot.SentenceSplit(text, false);
 		this.sentences = new RequestSentence[sentences.Length];
 		for (var i = 0; i < sentences.Length; ++i) {
 			this.sentences[i] = new RequestSentence(this, sentences[i]);
 		}
-		this.Sentences = Array.AsReadOnly(this.sentences);
+		Sentences = Array.AsReadOnly(this.sentences);
 	}
 
-	public RequestSentence GetLastSentence(int n) => this.sentences[^n];
+	public RequestSentence GetLastSentence(int n) => sentences[^n];
 }
 
 public class RequestSentence(Request request, string text) {
 	public Request Request { get; } = request;
-	public Bot Bot => this.Request.Bot;
-	public User User => this.Request.User;
+	public Bot Bot => Request.Bot;
+	public User User => Request.User;
 	public string Text { get; } = request.Bot.Normalize(text);
 }

@@ -6,7 +6,7 @@ namespace Aiml.Tags;
 /// </remarks>
 public sealed class Think(TemplateElementCollection children) : RecursiveTemplateTag(children) {
 	public override string Evaluate(RequestProcess process) {
-		this.EvaluateChildren(process);
+		EvaluateChildren(process);
 		return string.Empty;
 	}
 }

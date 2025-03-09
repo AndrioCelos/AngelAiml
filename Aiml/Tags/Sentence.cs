@@ -6,7 +6,7 @@ namespace Aiml.Tags;
 /// <seealso cref="Formal"/><seealso cref="Lowercase"/><seealso cref="Uppercase"/>
 public sealed class Sentence(TemplateElementCollection children) : RecursiveTemplateTag(children) {
 	public override string Evaluate(RequestProcess process) {
-		var value = new StringBuilder(this.EvaluateChildren(process));
+		var value = new StringBuilder(EvaluateChildren(process));
 
 		for (var i = 0; i < value.Length; ++i) {
 			if (char.IsLetterOrDigit(value[i])) {

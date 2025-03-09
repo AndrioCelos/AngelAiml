@@ -6,5 +6,5 @@ namespace Aiml.Tags;
 /// </remarks>
 /// <seealso cref="Normalize"/>
 public sealed class Denormalize(TemplateElementCollection children) : RecursiveTemplateTag(children) {
-	public override string Evaluate(RequestProcess process) => process.Bot.Denormalize(this.EvaluateChildren(process));
+	public override string Evaluate(RequestProcess process) => process.Bot.Denormalize(EvaluateChildren(process));
 }

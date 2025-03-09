@@ -6,7 +6,7 @@ namespace Aiml.Tags;
 /// </remarks>
 public sealed class Gender(TemplateElementCollection children) : RecursiveTemplateTag(children) {
 	public override string Evaluate(RequestProcess process) {
-		var text = this.EvaluateChildrenOrStar(process);
+		var text = EvaluateChildrenOrStar(process);
 		return process.Bot.Config.GenderSubstitutions.Apply(text);
 	}
 }

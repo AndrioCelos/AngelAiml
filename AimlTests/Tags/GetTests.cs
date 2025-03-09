@@ -81,13 +81,13 @@ public class GetTests {
 
 	[Test]
 	public void EvaluateWithBoundTupleVariable() {
-		var tag = new Get(new("?x"), new(new Tuple("?y", "", new("?x", "sample tuple")).Encode(new[] { "?x", "?y" })), true);
+		var tag = new Get(new("?x"), new(new Tuple("?y", "", new("?x", "sample tuple")).Encode(["?x", "?y"])), true);
 		Assert.AreEqual("sample tuple", tag.Evaluate(GetTest().RequestProcess));
 	}
 
 	[Test]
 	public void EvaluateWithUnboundTupleVariable() {
-		var tag = new Get(new("?z"), new(new Tuple("?y", "", new("?x", "sample tuple")).Encode(new[] { "?x", "?y" })), true);
+		var tag = new Get(new("?z"), new(new Tuple("?y", "", new("?x", "sample tuple")).Encode(["?x", "?y"])), true);
 		Assert.AreEqual("unknown", tag.Evaluate(GetTest().RequestProcess));
 	}
 }

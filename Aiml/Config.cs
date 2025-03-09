@@ -40,20 +40,19 @@ public class Config {
 
 	public int DefaultDelay = 1000;
 
-	private CultureInfo locale = CultureInfo.CurrentCulture;
 	/// <summary>
 	/// The locale that should be used by default for string comparisons and the <c>date</c> template element.
 	/// Defaults to the system's current locale.
 	/// </summary>
 	public CultureInfo Locale {
-		get => this.locale;
+		get;
 		set {
-			this.locale = value ?? CultureInfo.CurrentCulture;
-			this.StringComparer = StringComparer.Create(this.Locale, true);
-			this.CaseSensitiveStringComparer = StringComparer.Create(this.Locale, false);
-			this.RebuildDictionaries();
+			field = value ?? CultureInfo.CurrentCulture;
+			StringComparer = StringComparer.Create(Locale, true);
+			CaseSensitiveStringComparer = StringComparer.Create(Locale, false);
+			RebuildDictionaries();
 		}
-	}
+	} = CultureInfo.CurrentCulture;
 	[JsonIgnore]
 	/// <summary>Returns the <see cref="StringComparer"/> used for set and map comparisons. This is changed by setting the <see cref="Locale"/> property.</summary>
 	public StringComparer StringComparer { get; private set; } = StringComparer.CurrentCultureIgnoreCase;
@@ -80,7 +79,7 @@ public class Config {
 	public string LearnfFile { get; set; } = "learnf.aiml";
 
 	/// <summary>Defined strings that delimit sentences in requests and responses. Defaults to [ ".", "!", "?", ";" ].</summary>
-	public char[] Splitters = new[] { '.', '!', '?', ';' };
+	public char[] Splitters = ['.', '!', '?', ';'];
 
 	/// <summary>Whether normalisation and other substitutions preserve the case of words.</summary>
 	public bool SubstitutionsPreserveCase;
@@ -95,19 +94,19 @@ public class Config {
 	/// <summary>Defines default values for user predicates, used by the <c>get</c> template element.</summary>
 	[JsonIgnore] public Dictionary<string, string> DefaultPredicates { get; set; } = new(StringComparer.CurrentCultureIgnoreCase);
 	/// <summary>Defines substitutions used by the <c>gender</c> template element.</summary>
-	[JsonIgnore] public SubstitutionList GenderSubstitutions   { get; set; } = new();
+	[JsonIgnore] public SubstitutionList GenderSubstitutions   { get; set; } = [];
 	/// <summary>Defines substitutions used by the <c>person</c> template element.</summary>
-	[JsonIgnore] public SubstitutionList PersonSubstitutions   { get; set; } = new();
+	[JsonIgnore] public SubstitutionList PersonSubstitutions   { get; set; } = [];
 	/// <summary>Defines substitutions used by the <c>person2</c> template element.</summary>
-	[JsonIgnore] public SubstitutionList Person2Substitutions  { get; set; } = new();
+	[JsonIgnore] public SubstitutionList Person2Substitutions  { get; set; } = [];
 	/// <summary>Defines substitutions used in the normalisation process.</summary>
-	[JsonIgnore] public SubstitutionList NormalSubstitutions   { get; set; } = new();
+	[JsonIgnore] public SubstitutionList NormalSubstitutions   { get; set; } = [];
 	/// <summary>Defines substitutions used in the denormalisation process.</summary>
-	[JsonIgnore] public SubstitutionList DenormalSubstitutions { get; set; } = new();
+	[JsonIgnore] public SubstitutionList DenormalSubstitutions { get; set; } = [];
 
 	private void RebuildDictionaries() {
-		this.BotProperties = new Dictionary<string, string>(this.BotProperties, this.StringComparer);
-		this.DefaultPredicates = new Dictionary<string, string>(this.DefaultPredicates, this.StringComparer);
+		BotProperties = new Dictionary<string, string>(BotProperties, StringComparer);
+		DefaultPredicates = new Dictionary<string, string>(DefaultPredicates, StringComparer);
 	}
 
 	public static Config FromFile(string file) {
@@ -121,15 +120,15 @@ public class Config {
 		new JsonSerializer().Populate(reader, target);
 	}
 
-	public void LoadPredicates(string file) => Load(file, this.BotProperties);
-	public void LoadGender(string file) => Load(file, this.GenderSubstitutions);
-	public void LoadPerson(string file) => Load(file, this.PersonSubstitutions);
-	public void LoadPerson2(string file) => Load(file, this.Person2Substitutions);
-	public void LoadNormal(string file) => Load(file, this.NormalSubstitutions);
-	public void LoadDenormal(string file) => Load(file, this.DenormalSubstitutions);
-	public void LoadDefaultPredicates(string file) => Load(file, this.DefaultPredicates);
+	public void LoadPredicates(string file) => Load(file, BotProperties);
+	public void LoadGender(string file) => Load(file, GenderSubstitutions);
+	public void LoadPerson(string file) => Load(file, PersonSubstitutions);
+	public void LoadPerson2(string file) => Load(file, Person2Substitutions);
+	public void LoadNormal(string file) => Load(file, NormalSubstitutions);
+	public void LoadDenormal(string file) => Load(file, DenormalSubstitutions);
+	public void LoadDefaultPredicates(string file) => Load(file, DefaultPredicates);
 
-	public string GetDefaultPredicate(string name) => this.DefaultPredicates.GetValueOrDefault(name, this.DefaultPredicate);
+	public string GetDefaultPredicate(string name) => DefaultPredicates.GetValueOrDefault(name, DefaultPredicate);
 
 	public class SubstitutionConverter : JsonConverter {
 		public override bool CanConvert(Type type) => type == typeof(Substitution);

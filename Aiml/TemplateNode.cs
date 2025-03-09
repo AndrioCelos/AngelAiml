@@ -26,12 +26,12 @@ public abstract class TemplateNode {
 public abstract class RecursiveTemplateTag(TemplateElementCollection children) : TemplateNode {
 	public TemplateElementCollection Children { get; } = children;
 
-	public string EvaluateChildren(RequestProcess process) => this.Children?.Evaluate(process) ?? "";
+	public string EvaluateChildren(RequestProcess process) => Children?.Evaluate(process) ?? "";
 	public string EvaluateChildrenOrStar(RequestProcess process)
-		=> this.Children is not null && !this.Children.IsEmpty ? this.Children.Evaluate(process)
+		=> Children is not null && !Children.IsEmpty ? Children.Evaluate(process)
 			: process.star.Count > 0 ? process.star[0] : process.Bot.Config.DefaultWildcard;
 
-	public override string ToString() => $"<{this.GetType().Name.ToLowerInvariant()}>{this.Children}</{this.GetType().Name.ToLowerInvariant()}>";
+	public override string ToString() => $"<{GetType().Name.ToLowerInvariant()}>{Children}</{GetType().Name.ToLowerInvariant()}>";
 }
 
 /// <summary>Represents constant text in place of a template-side AIML tag.</summary>
@@ -49,13 +49,13 @@ public sealed class TemplateText : TemplateNode {
 	public TemplateText(string text, bool reduceWhitespace) {
 		// Pandorabots reduces consecutive whitespace in text nodes to a single space character (like HTML).
 		if (reduceWhitespace) text = whitespaceRegex.Replace(text, " ");
-		this.Text = text;
+		Text = text;
 	}
 
 	/// <summary>Returns this node's text.</summary>
-	public override string Evaluate(RequestProcess process) => this.Text;
+	public override string Evaluate(RequestProcess process) => Text;
 
-	public override string ToString() => this.Text;
+	public override string ToString() => Text;
 }
 
 /// <summary>Represents a collection of <see cref="TemplateNode"/> instances, as contained by a <see cref="RecursiveTemplateTag"/> or attribute subtag.</summary>
@@ -66,20 +66,20 @@ public class TemplateElementCollection(params TemplateNode[] tags) : IReadOnlyLi
 
 	/// <summary>Indicates whether this <see cref="TemplateElementCollection"/> contains a <see cref="Tags.Loop"/> tag.</summary>
 	public bool Loop { get; } = tags.OfType<Tags.Loop>().Any();
-	public int Count => this.tags.Length;
-	public bool IsEmpty => this.tags.All(t => t is TemplateText text && string.IsNullOrEmpty(text.Text));
-	public bool IsWhitespace => this.tags.All(t => t is TemplateText text && string.IsNullOrWhiteSpace(text.Text));
+	public int Count => tags.Length;
+	public bool IsEmpty => tags.All(t => t is TemplateText text && string.IsNullOrEmpty(text.Text));
+	public bool IsWhitespace => tags.All(t => t is TemplateText text && string.IsNullOrWhiteSpace(text.Text));
 
-	public TemplateElementCollection(IEnumerable<TemplateNode> tags) : this(tags.ToArray()) { }
-	public TemplateElementCollection(string text) : this(new TemplateNode[] { new TemplateText(text) }) { }
+	public TemplateElementCollection(IEnumerable<TemplateNode> tags) : this([.. tags]) { }
+	public TemplateElementCollection(string text) : this([new TemplateText(text)]) { }
 
-	public TemplateNode this[int index] => this.tags[index];
+	public TemplateNode this[int index] => tags[index];
 
 	/// <summary>Evaluates the contained tags and returns the result.</summary>
 	public string Evaluate(RequestProcess process) {
-		if (this.tags == null || this.tags.Length == 0) return string.Empty;
+		if (tags == null || tags.Length == 0) return string.Empty;
 		var builder = new StringBuilder();
-		foreach (var tag in this.tags) {
+		foreach (var tag in tags) {
 			var output = tag.Evaluate(process);
 
 			// Condense consecutive spaces.
@@ -106,7 +106,7 @@ public class TemplateElementCollection(params TemplateNode[] tags) : IReadOnlyLi
 					break;
 			}
 		}
-		return new TemplateElementCollection(tagList.ToArray());
+		return new TemplateElementCollection([.. tagList]);
 	}
 
 	public override string ToString() => string.Join(null, this);
@@ -122,17 +122,17 @@ public class TemplateElementCollection(params TemplateNode[] tags) : IReadOnlyLi
 	TemplateNode IList<TemplateNode>.this[int index] { get => this[index]; set => throw new NotSupportedException(); }
 	object? IList.this[int index] { get => this[index]; set => throw new NotSupportedException(); }
 
-	public int IndexOf(TemplateNode tag) => Array.IndexOf(this.tags, tag);
-	public bool Contains(TemplateNode tag) => this.IndexOf(tag) >= 0;
+	public int IndexOf(TemplateNode tag) => Array.IndexOf(tags, tag);
+	public bool Contains(TemplateNode tag) => IndexOf(tag) >= 0;
 
 	public void CopyTo(TemplateNode[] target, int startIndex) {
-		for (var i = 0; i < this.tags.Length; ++i)
-			target[startIndex + i] = this.tags[i];
+		for (var i = 0; i < tags.Length; ++i)
+			target[startIndex + i] = tags[i];
 	}
-	void ICollection.CopyTo(Array target, int startIndex) => this.tags.CopyTo(target, startIndex);
+	void ICollection.CopyTo(Array target, int startIndex) => tags.CopyTo(target, startIndex);
 
-	public IEnumerator<TemplateNode> GetEnumerator() => ((IEnumerable<TemplateNode>) this.tags).GetEnumerator();
-	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+	public IEnumerator<TemplateNode> GetEnumerator() => ((IEnumerable<TemplateNode>) tags).GetEnumerator();
+	IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
 	bool ICollection<TemplateNode>.Remove(TemplateNode tag) => throw new NotSupportedException();
 	void ICollection<TemplateNode>.Clear() => throw new NotSupportedException();
@@ -143,8 +143,8 @@ public class TemplateElementCollection(params TemplateNode[] tags) : IReadOnlyLi
 	void IList.RemoveAt(int index) => throw new NotSupportedException();
 	void IList.Insert(int index, object? tag) => throw new NotSupportedException();
 	void IList.Clear() => throw new NotSupportedException();
-	int IList.IndexOf(object? tag) => tag is TemplateNode node ? this.IndexOf(node) : -1;
-	bool IList.Contains(object? tag) => tag is TemplateNode node && this.Contains(node);
+	int IList.IndexOf(object? tag) => tag is TemplateNode node ? IndexOf(node) : -1;
+	bool IList.Contains(object? tag) => tag is TemplateNode node && Contains(node);
 	int IList.Add(object? tag) => throw new NotSupportedException();
 
 	#endregion

@@ -29,7 +29,7 @@ public sealed class System(TemplateElementCollection children) : RecursiveTempla
 			return process.Bot.Config.SystemFailedMessage;
 		}
 
-		var command = this.EvaluateChildren(process);
+		var command = EvaluateChildren(process);
 
 		try {
 			var process2 = new Process();

@@ -20,34 +20,34 @@ public class SelectTests {
 
 	[Test]
 	public void EvaluateBacktracking() {
-		var tag = new Select(new("?x"), new Clause[] {
+		var tag = new Select(new("?x"), [
 			new(new("?x"), new("r"), new("?y"), true),
 			new(new("?y"), new("r"), new("X"), true)
-		});
+		]);
 		Assert.AreEqual("Aj94AUE=", tag.Evaluate(GetTest().RequestProcess).ToString());
 	}
 
 	[Test]
 	public void EvaluateBacktrackingWithoutVars() {
-		var tag = new Select(null, new Clause[] {
+		var tag = new Select(null, [
 			new(new("?x"), new("r"), new("?y"), true),
 			new(new("?y"), new("r"), new("X"), true)
-		});
+		]);
 		Assert.AreEqual("Aj95AU4CP3gBQQ== Aj95AU8CP3gBQQ==", tag.Evaluate(GetTest().RequestProcess).ToString());
 	}
 
 	[Test]
 	public void EvaluateNoMatch() {
-		var tag = new Select(new("?x"), new Clause[] { new(new("A"), new("attr"), new("?x"), true) });
+		var tag = new Select(new("?x"), [new(new("A"), new("attr"), new("?x"), true)]);
 		Assert.AreEqual("nil", tag.Evaluate(GetTest().RequestProcess).ToString());
 	}
 
 	[Test]
 	public void EvaluateWithNotQ() {
-		var tag = new Select(new("?y"), new Clause[] {
+		var tag = new Select(new("?y"), [
 			new(new("A"), new("r"), new("?y"), true),
 			new(new("?y"), new("attr"), new("0"), false)
-		});
+		]);
 		Assert.AreEqual("Aj95AU0= Aj95AU8=", tag.Evaluate(GetTest().RequestProcess).ToString());
 	}
 

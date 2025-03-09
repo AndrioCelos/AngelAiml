@@ -6,14 +6,14 @@ public class MapSet : Set {
 	public override int MaxWords { get; }
 
 	public MapSet(string mapName, Bot bot) {
-		this.Bot = bot ?? throw new ArgumentNullException(nameof(bot));
-		this.Map = this.Bot.Maps[mapName];
-		this.MaxWords = this.Map is Maps.StringMap stringMap
-			? stringMap.Keys.Max(s => s.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Length)
+		Bot = bot ?? throw new ArgumentNullException(nameof(bot));
+		Map = Bot.Maps[mapName];
+		MaxWords = Map is Maps.StringMap stringMap
+			? stringMap.Keys.Max(s => s.Split([' '], StringSplitOptions.RemoveEmptyEntries).Length)
 			: int.MaxValue;
 	}
 
-	public override bool Contains(string phrase) => this.Map is Maps.StringMap stringMap
+	public override bool Contains(string phrase) => Map is Maps.StringMap stringMap
 		? stringMap.ContainsKey(phrase)
-		: this.Map[phrase] is string s;
+		: Map[phrase] is not null;
 }

@@ -57,7 +57,7 @@ public class AimlLoader(Bot bot) {
 	};
 	internal static readonly Dictionary<string, OobReplacementHandler> oobHandlers = new(StringComparer.OrdinalIgnoreCase);
 	internal static readonly Dictionary<string, ISraixService> sraixServices = new(StringComparer.OrdinalIgnoreCase);
-	private static readonly Dictionary<Type, TemplateElementBuilder> childElementBuilders = new();
+	private static readonly Dictionary<Type, TemplateElementBuilder> childElementBuilders = [];
 
 	public static Version AimlVersion => new(2, 1);
 	/// <summary>Whether this loader is loading a newer version of AIML or an <see cref="Tags.Oob"/> or rich media element.</summary>
@@ -117,44 +117,44 @@ public class AimlLoader(Bot bot) {
 		sraixServices.Add(service.GetType().FullName!, service);
 	}
 
-	public void LoadAimlFiles() => this.LoadAimlFiles(Path.Combine(this.bot.ConfigDirectory, this.bot.Config.AimlDirectory));
+	public void LoadAimlFiles() => LoadAimlFiles(Path.Combine(bot.ConfigDirectory, bot.Config.AimlDirectory));
 	public void LoadAimlFiles(string path) {
 		if (!Directory.Exists(path)) throw new FileNotFoundException($"AIML directory not found: {path}", path);
 
-		this.bot.Log(LogLevel.Info, $"Loading AIML files from {path}");
+		bot.Log(LogLevel.Info, $"Loading AIML files from {path}");
 		var files = Directory.GetFiles(path, "*.aiml", SearchOption.AllDirectories);
 
 		foreach (var file in files)
-			this.LoadAiml(file);
+			LoadAiml(file);
 
 		GC.Collect();
-		this.bot.Log(LogLevel.Info, $"Finished loading the AIML files. {this.bot.Size} {(this.bot.Size == 1 ? "category" : "categories")} in {files.Length} {(files.Length == 1 ? "file" : "files")} processed.");
+		bot.Log(LogLevel.Info, $"Finished loading the AIML files. {bot.Size} {(bot.Size == 1 ? "category" : "categories")} in {files.Length} {(files.Length == 1 ? "file" : "files")} processed.");
 	}
 
 	public void LoadAiml(string path) {
-		this.bot.Log(LogLevel.Info, $"Processing AIML file: {path}");
+		bot.Log(LogLevel.Info, $"Processing AIML file: {path}");
 		var document = XDocument.Load(path, LoadOptions.SetBaseUri | LoadOptions.SetLineInfo | LoadOptions.PreserveWhitespace);
-		this.LoadAiml(document);
+		LoadAiml(document);
 	}
 	public void LoadAiml(XDocument document)
-		=> this.LoadAiml(document.Root ?? throw new ArgumentException("The specified XML document is not a valid AIML document.", nameof(document)));
+		=> LoadAiml(document.Root ?? throw new ArgumentException("The specified XML document is not a valid AIML document.", nameof(document)));
 	public void LoadAiml(XElement aimlElement) {
 		if (!aimlElement.Name.LocalName.Equals("aiml", StringComparison.OrdinalIgnoreCase))
 			throw new ArgumentException("The specified XML document is not a valid AIML document.", nameof(aimlElement));
 		var versionString = aimlElement.Attribute("version")?.Value;
-		this.ForwardCompatible = !Version.TryParse(versionString, out var version) || version > AimlVersion;
-		this.LoadAimlInto(this.bot.Graphmaster, aimlElement);
+		ForwardCompatible = !Version.TryParse(versionString, out var version) || version > AimlVersion;
+		LoadAimlInto(bot.Graphmaster, aimlElement);
 	}
 	public void LoadAimlInto(PatternNode target, XElement aimlElement) {
 		foreach (var el in aimlElement.Nodes().OfType<XElement>()) {
 			if (el.Name == "topic") {
-				this.ProcessTopic(target, el);
+				ProcessTopic(target, el);
 			} else if (el.Name == "category") {
-				this.ProcessCategory(target, el);
+				ProcessCategory(target, el);
 			}
 		}
 
-		this.bot.InvalidateVocabulary();
+		bot.InvalidateVocabulary();
 	}
 
 	private void ProcessTopic(PatternNode target, XElement el) {
@@ -163,13 +163,13 @@ public class AimlLoader(Bot bot) {
 		var topicName = attr.Value;
 		foreach (var el2 in el.Elements()) {
 			if (el2.Name == "category")
-				this.ProcessCategory(target, el2, topicName);
+				ProcessCategory(target, el2, topicName);
 			else
 				throw new AimlException($"Invalid child element <{el2.Name}>", el);
 		}
 	}
 
-	public void ProcessCategory(PatternNode target, XElement el) => this.ProcessCategory(target, el, "*");
+	public void ProcessCategory(PatternNode target, XElement el) => ProcessCategory(target, el, "*");
 	public void ProcessCategory(PatternNode target, XElement el, string topicName) {
 		XElement? patternNode = null, thatNode = null, topicNode = null, templateNode = null;
 
@@ -187,12 +187,12 @@ public class AimlLoader(Bot bot) {
 
 		var templateContent = TemplateElementCollection.FromXml(templateNode, this);
 
-		var path = this.GeneratePath(patternNode, thatNode, topicNode, topicName);
+		var path = GeneratePath(patternNode, thatNode, topicNode, topicName);
 		target.AddChild(path, new(templateContent, templateNode.BaseUri, ((IXmlLineInfo) templateNode).LineNumber), out var existingTemplate);
 		if (existingTemplate is null)
-			this.bot.Size++;
+			bot.Size++;
 		else
-			this.bot.Log(LogLevel.Warning, $"Duplicate category: '{string.Join(" ", path)}'\nFirst defined in {existingTemplate.Uri} line {existingTemplate.LineNumber}\nDuplicated in {templateNode.BaseUri} line {((IXmlLineInfo) templateNode).LineNumber}");
+			bot.Log(LogLevel.Warning, $"Duplicate category: '{string.Join(" ", path)}'\nFirst defined in {existingTemplate.Uri} line {existingTemplate.LineNumber}\nDuplicated in {templateNode.BaseUri} line {((IXmlLineInfo) templateNode).LineNumber}");
 	}
 
 	public TemplateNode ParseElement(XElement el) {
@@ -203,11 +203,11 @@ public class AimlLoader(Bot bot) {
 				throw new AimlException(ex.Message, el, ex);
 			}
 		}
-		return this.ForwardCompatible || mediaElements.ContainsKey(el.Name.LocalName) ? Tags.Oob.FromXml(el, this)
+		return ForwardCompatible || mediaElements.ContainsKey(el.Name.LocalName) ? Tags.Oob.FromXml(el, this)
 			: throw new AimlException($"Not a valid AIML {AimlVersion} tag", el);
 	}
 
-	public T ParseChildElement<T>(XElement el) => (T) this.ParseChildElementInternal(el, typeof(T));
+	public T ParseChildElement<T>(XElement el) => (T) ParseChildElementInternal(el, typeof(T));
 	internal object ParseChildElementInternal(XElement el, Type type) {
 		if (!childElementBuilders.TryGetValue(type, out var builder))
 			builder = childElementBuilders[type] = new(type);
@@ -215,9 +215,9 @@ public class AimlLoader(Bot bot) {
 	}
 
 	private IEnumerable<PathToken> GeneratePath(XElement patternNode, XElement? thatNode, XElement? topicNode, string topic) {
-		var patternTokens = this.ParsePattern(patternNode);
-		var thatTokens = this.ParsePattern(thatNode);
-		var topicTokens = topicNode != null ? this.ParsePattern(topicNode) :
+		var patternTokens = ParsePattern(patternNode);
+		var thatTokens = ParsePattern(thatNode);
+		var topicTokens = topicNode != null ? ParsePattern(topicNode) :
 			topic.Split((char[]?) null, StringSplitOptions.RemoveEmptyEntries).Select(s => new PathToken(s, false));
 
 		foreach (var token in patternTokens) yield return token;
@@ -243,7 +243,7 @@ public class AimlLoader(Bot bot) {
 					switch (el2.Name.LocalName.ToLowerInvariant()) {
 						case "bot":
 							var attr = el2.Attribute("name") ?? throw new AimlException("Missing 'name' attribute in <bot> tag", el);
-							yield return new(this.bot.GetProperty(attr.Value));  // Bot properties don't change during the bot's uptime, so we process them here.
+							yield return new(bot.GetProperty(attr.Value));  // Bot properties don't change during the bot's uptime, so we process them here.
 							break;
 						case "set":
 							yield return new(el2.Value, true);

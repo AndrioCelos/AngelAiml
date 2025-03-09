@@ -10,14 +10,14 @@ public sealed class Random : TemplateNode {
 
 	public Random(Li[] items) {
 		if (items.Length == 0) throw new ArgumentException("<random> element must contain at least one item.", nameof(items));
-		this.Items = items;
+		Items = items;
 	}
 
-	public Li Pick(RequestProcess process) => this.Items[process.Bot.Random.Next(this.Items.Length)];
+	public Li Pick(RequestProcess process) => Items[process.Bot.Random.Next(Items.Length)];
 
-	public override string Evaluate(RequestProcess process) => this.Pick(process).Evaluate(process);
+	public override string Evaluate(RequestProcess process) => Pick(process).Evaluate(process);
 
 	public class Li(TemplateElementCollection children) : RecursiveTemplateTag(children) {
-		public override string Evaluate(RequestProcess process) => this.Children.Evaluate(process);
+		public override string Evaluate(RequestProcess process) => Children.Evaluate(process);
 	}
 }

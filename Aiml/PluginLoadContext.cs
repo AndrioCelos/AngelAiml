@@ -13,20 +13,20 @@ internal class PluginLoadContext(string pluginPath) : AssemblyLoadContext {
 				return a;
 		}
 
-		var assemblyPath = this.resolver.ResolveAssemblyToPath(assemblyName);
+		var assemblyPath = resolver.ResolveAssemblyToPath(assemblyName);
 		if (assemblyPath != null)
-			return this.LoadFromAssemblyPath(assemblyPath);
+			return LoadFromAssemblyPath(assemblyPath);
 
 		// The assembly couldn't be found from deps.json; look for it in the plugins directory.
 		if (assemblyName.Name == null)
 			return null;
 		var path = Path.Combine("plugins", $"{assemblyName.Name}.dll");
-		return File.Exists(path) ? this.LoadFromAssemblyPath(path) : null;
+		return File.Exists(path) ? LoadFromAssemblyPath(path) : null;
 	}
 
 	protected override IntPtr LoadUnmanagedDll(string unmanagedDllName) {
-		var libraryPath = this.resolver.ResolveUnmanagedDllToPath(unmanagedDllName);
-		return libraryPath != null ? this.LoadUnmanagedDllFromPath(libraryPath) : IntPtr.Zero;
+		var libraryPath = resolver.ResolveUnmanagedDllToPath(unmanagedDllName);
+		return libraryPath != null ? LoadUnmanagedDllFromPath(libraryPath) : IntPtr.Zero;
 	}
 }
 #endif

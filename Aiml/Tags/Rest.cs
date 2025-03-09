@@ -4,7 +4,7 @@
 /// <seealso cref="First"/><seealso cref="Srai"/>
 public sealed class Rest(TemplateElementCollection children) : RecursiveTemplateTag(children) {
 	public override string Evaluate(RequestProcess process) {
-		var sentence = this.EvaluateChildren(process).Trim();
+		var sentence = EvaluateChildren(process).Trim();
 		if (sentence == "") return process.Bot.Config.DefaultListItem;
 
 		var delimiter = sentence.IndexOf(' ');

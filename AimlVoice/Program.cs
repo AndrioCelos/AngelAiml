@@ -13,10 +13,10 @@ public class Program {
 	internal static SpeechSynthesizer? synthesizer;
 	internal static Dictionary<string, Grammar> grammars = new(StringComparer.InvariantCultureIgnoreCase);
 	internal static string progressMessage = "";
-	internal static List<string> enabledGrammarPaths = new();
+	internal static List<string> enabledGrammarPaths = [];
 	internal static PartialInputMode partialInput;
 	private static Stopwatch? partialInputTimeout;
-	private static readonly List<Reply> replies = new();
+	private static readonly List<Reply> replies = [];
 
 	private static readonly Queue<SpeechQueueItem> speechQueue = new();
 
@@ -28,7 +28,7 @@ public class Program {
 
 		for (var i = 0; i < args.Length; ++i) {
 			var s = args[i];
-			if (switches && s.StartsWith("-")) {
+			if (switches && s.StartsWith('-')) {
 				switch (s) {
 					case "--":
 						switches = false;

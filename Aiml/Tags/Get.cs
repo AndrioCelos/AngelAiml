@@ -35,18 +35,18 @@ public sealed class Get(TemplateElementCollection key, TemplateElementCollection
 	}
 
 	public override string Evaluate(RequestProcess process) {
-		if (this.TupleString is not null) {
+		if (TupleString is not null) {
 			// Get a value from a tuple.
-			var variable = this.Key.Evaluate(process);
+			var variable = Key.Evaluate(process);
 			if (!variable.IsClauseVariable()) {
 				process.Log(LogLevel.Warning, $"In element <get>: 'var' was not a valid tuple query variable: {variable}");
 				return process.Bot.Config.DefaultPredicate;
 			}
-			var tupleString = this.TupleString.Evaluate(process);
+			var tupleString = TupleString.Evaluate(process);
 			return Tuple.GetFromEncoded(tupleString, variable) ?? process.Bot.Config.DefaultPredicate;
 		}
 
 		// Get a user predicate or local variable.
-		return this.LocalVar ? process.GetVariable(this.Key.Evaluate(process)) : process.User.GetPredicate(this.Key.Evaluate(process));
+		return LocalVar ? process.GetVariable(Key.Evaluate(process)) : process.User.GetPredicate(Key.Evaluate(process));
 	}
 }

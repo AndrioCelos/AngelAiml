@@ -34,9 +34,9 @@ public sealed class Uniq(TemplateElementCollection subj, TemplateElementCollecti
 	public TemplateElementCollection Object { get; } = obj;
 
 	public override string Evaluate(RequestProcess process) {
-		var subj = this.Subject.Evaluate(process);
-		var pred = this.Predicate.Evaluate(process);
-		var obj = this.Object.Evaluate(process);
+		var subj = Subject.Evaluate(process);
+		var pred = Predicate.Evaluate(process);
+		var obj = Object.Evaluate(process);
 
 		if (subj.IsClauseVariable()) subj = null;
 		if (pred.IsClauseVariable()) pred = null;

@@ -16,7 +16,7 @@ public sealed class Map(TemplateElementCollection name, TemplateElementCollectio
 	public TemplateElementCollection Name { get; set; } = name;
 
 	public override string Evaluate(RequestProcess process)
-		=> process.Bot.Maps.TryGetValue(this.Name.Evaluate(process), out var map)
-			? map[this.EvaluateChildren(process)] ?? process.Bot.Config.DefaultMap
+		=> process.Bot.Maps.TryGetValue(Name.Evaluate(process), out var map)
+			? map[EvaluateChildren(process)] ?? process.Bot.Config.DefaultMap
 			: process.Bot.Config.DefaultMap;
 }

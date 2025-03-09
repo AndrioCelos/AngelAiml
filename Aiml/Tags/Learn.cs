@@ -12,7 +12,7 @@ public sealed class Learn : TemplateNode {
 	public XElement Element { get; }
 
 	public Learn(XElement el) {
-		this.Element = el;
+		Element = el;
 		ValidateLearnElement(el);
 	}
 
@@ -65,7 +65,7 @@ public sealed class Learn : TemplateNode {
 
 	public override string Evaluate(RequestProcess process) {
 		// Evaluate <eval> tags.
-		var el = new XElement(this.Element);
+		var el = new XElement(Element);
 		ProcessXml(el, process);
 
 		// Learn the result.

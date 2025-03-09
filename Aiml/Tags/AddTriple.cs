@@ -22,9 +22,9 @@ public sealed class AddTriple(TemplateElementCollection subj, TemplateElementCol
 	public TemplateElementCollection Object { get; } = obj;
 
 	public override string Evaluate(RequestProcess process) {
-		var subj = this.Subject.Evaluate(process).Trim();
-		var pred = this.Predicate.Evaluate(process).Trim();
-		var obj = this.Object.Evaluate(process).Trim();
+		var subj = Subject.Evaluate(process).Trim();
+		var pred = Predicate.Evaluate(process).Trim();
+		var obj = Object.Evaluate(process).Trim();
 
 		if (string.IsNullOrEmpty(subj) || string.IsNullOrEmpty(pred) || string.IsNullOrEmpty(obj)) {
 			process.Log(LogLevel.Warning, $"In element <addtriple>: Could not add triple with missing elements. {{ Subject = {subj}, Predicate = {pred}, Object = {obj} }}");

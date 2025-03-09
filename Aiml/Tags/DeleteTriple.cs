@@ -21,17 +21,17 @@ public sealed class DeleteTriple : TemplateNode {
 	public TemplateElementCollection? Object { get; }
 
 	public DeleteTriple(TemplateElementCollection subj, TemplateElementCollection? pred, TemplateElementCollection? obj) {
-		this.Subject = subj;
-		this.Predicate = pred;
-		this.Object = obj;
+		Subject = subj;
+		Predicate = pred;
+		Object = obj;
 		if (pred is null && obj is not null)
 			throw new ArgumentException("<deletetriple> element cannot have 'obj' attribute without 'pred' attribute.", nameof(pred));
 	}
 
 	public override string Evaluate(RequestProcess process) {
-		var subj = this.Subject.Evaluate(process).Trim();
-		var pred = this.Predicate?.Evaluate(process).Trim();
-		var obj = this.Object?.Evaluate(process).Trim();
+		var subj = Subject.Evaluate(process).Trim();
+		var pred = Predicate?.Evaluate(process).Trim();
+		var obj = Object?.Evaluate(process).Trim();
 
 		if (string.IsNullOrEmpty(subj)) {
 			process.Log(LogLevel.Warning, "In element <deletetriple>: Subject was empty.");

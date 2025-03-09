@@ -16,15 +16,15 @@ public class PatternNode {
 
 	public PatternNode(IEqualityComparer<string> comparer) : this(null, comparer) { }
 	public PatternNode(Template? template, IEqualityComparer<string> comparer) {
-		this.children = new Dictionary<string, PatternNode>(comparer);
-		this.Children = new ReadOnlyDictionary<string, PatternNode>(this.children);
-		this.setChildren = new List<SetChild>();
-		this.SetChildren = this.setChildren.AsReadOnly();
-		this.Template = template;
+		children = new Dictionary<string, PatternNode>(comparer);
+		Children = new ReadOnlyDictionary<string, PatternNode>(children);
+		setChildren = [];
+		SetChildren = setChildren.AsReadOnly();
+		Template = template;
 	}
 
 	public void AddChild(IEnumerable<PathToken> path, Template template)
-		=> this.AddChild(path, template, out _);
+		=> AddChild(path, template, out _);
 	public void AddChild(IEnumerable<PathToken> path, Template template, out Template? existingTemplate) {
 		var node = this;
 		foreach (var token in path ?? throw new ArgumentNullException(nameof(path))) {
@@ -40,7 +40,7 @@ public class PatternNode {
 	public bool TryGetChild(PathToken token, out PatternNode node) {
 #endif
 		if (token.IsSet) {
-			var child = this.SetChildren.FirstOrDefault(c => c.SetName == token.Text);
+			var child = SetChildren.FirstOrDefault(c => c.SetName == token.Text);
 			if (child == null) {
 				node = null!;
 				return false;
@@ -48,7 +48,7 @@ public class PatternNode {
 			node = child.Node;
 			return true;
 		} else
-			return this.Children.TryGetValue(token.Text, out node);
+			return Children.TryGetValue(token.Text, out node);
 	}
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_0_OR_GREATER
 	public bool TryGetChild(IEnumerable<PathToken> path, [MaybeNullWhen(false)] out PatternNode node) {
@@ -64,18 +64,18 @@ public class PatternNode {
 
 	public PatternNode GetOrAddChild(PathToken token) {
 		if (token.IsSet) {
-			var child = this.SetChildren.FirstOrDefault(c => c.SetName == token.Text);
+			var child = SetChildren.FirstOrDefault(c => c.SetName == token.Text);
 			if (child == null) {
-				var node = new PatternNode(this.children.Comparer);
-				this.setChildren.Add(new SetChild(token.Text, node));
+				var node = new PatternNode(children.Comparer);
+				setChildren.Add(new SetChild(token.Text, node));
 				return node;
 			}
 			return child.Node;
 		}
 		else {
-			if (this.Children.TryGetValue(token.Text, out var node)) return node;
-			node = new PatternNode(this.children.Comparer);
-			this.children.Add(token.Text, node);
+			if (Children.TryGetValue(token.Text, out var node)) return node;
+			node = new PatternNode(children.Comparer);
+			children.Add(token.Text, node);
 			return node;
 		}
 	}
@@ -107,7 +107,7 @@ public class PatternNode {
 			process.Log(LogLevel.Diagnostic, $"Normalized path: {string.Join(" ", inputPath)}");
 #endif
 
-		var result = this.Search(sentence, process, inputPath, 0, traceSearch, MatchState.Message);
+		var result = Search(sentence, process, inputPath, 0, traceSearch, MatchState.Message);
 		return result;
 	}
 	private Template? Search(RequestSentence sentence, RequestProcess process, string[] inputPath, int inputPathIndex, bool traceSearch, MatchState matchState) {
@@ -124,7 +124,7 @@ public class PatternNode {
 		bool tokensRemaining;
 		if (inputPathIndex >= inputPath.Length) {
 			// No tokens remaining in the input path. If this node has a template, return success.
-			if (this.Template != null) return this.Template;
+			if (Template != null) return Template;
 			// Otherwise, look for zero+ wildcards.
 			tokensRemaining = false;
 		} else
@@ -136,28 +136,28 @@ public class PatternNode {
 
 		// Search for child nodes that match the input in priority order.
 		// Priority exact match.
-		if (tokensRemaining && this.children.TryGetValue("$" + inputPath[inputPathIndex], out var node)) {
+		if (tokensRemaining && children.TryGetValue("$" + inputPath[inputPathIndex], out var node)) {
 			process.patternPathTokens[pathDepth] = "$" + inputPath[inputPathIndex];
 			var result = node.Search(sentence, process, inputPath, inputPathIndex + 1, traceSearch, matchState);
 			if (result != null) return result;
 		}
 
 		// Priority zero+ wildcard.
-		if (this.children.TryGetValue("#", out node)) {
+		if (children.TryGetValue("#", out node)) {
 			process.patternPathTokens[pathDepth] = "#";
 			var result = node.WildcardSearch(sentence, process, inputPath, inputPathIndex, traceSearch, matchState, 0);
 			if (result != null) return result;
 		}
 
 		// Priority one+ wildcard.
-		if (this.children.TryGetValue("_", out node)) {
+		if (children.TryGetValue("_", out node)) {
 			process.patternPathTokens[pathDepth] = "_";
 			var result = node.WildcardSearch(sentence, process, inputPath, inputPathIndex, traceSearch, matchState, 1);
 			if (result != null) return result;
 		}
 
 		// Exact match.
-		if (tokensRemaining && this.children.TryGetValue(inputPath[inputPathIndex], out node)) {
+		if (tokensRemaining && children.TryGetValue(inputPath[inputPathIndex], out node)) {
 			// matchState must only be advanced now so that wildcards capturing zero words works correctly.
 			switch (matchState) {
 				case MatchState.Message:
@@ -174,7 +174,7 @@ public class PatternNode {
 
 		// Sets. (The empty string cannot be matched by a set token.)
 		if (tokensRemaining) {
-			foreach (var child in this.setChildren) {
+			foreach (var child in setChildren) {
 				process.patternPathTokens[pathDepth] = $"<set>{child.SetName}</set>";
 				if (!sentence.Bot.Sets.TryGetValue(child.SetName, out var set)) {
 					sentence.Request.Bot.Log(LogLevel.Warning, $"Reference to a missing set in pattern path '{string.Join(" ", process.patternPathTokens)}'.");
@@ -185,7 +185,7 @@ public class PatternNode {
 				star.Add("");  // Reserving a space; see above.
 
 				// Find the maximum number of words that this can match.
-				int endIndex = inputPathIndex;
+				var endIndex = inputPathIndex;
 				for (var i = inputPathIndex + 1; i < inputPath.Length; i++) {
 					if (i - inputPathIndex > set.MaxWords
 						|| (matchState == MatchState.Message && inputPath[i - 1] == "<that>")
@@ -218,14 +218,14 @@ public class PatternNode {
 		}
 
 		// Zero+ wildcard.
-		if (this.children.TryGetValue("^", out node)) {
+		if (children.TryGetValue("^", out node)) {
 			process.patternPathTokens[pathDepth] = "^";
 			var result = node.WildcardSearch(sentence, process, inputPath, inputPathIndex, traceSearch, matchState, 0);
 			if (result != null) return result;
 		}
 
 		// One+ wildcard.
-		if (this.children.TryGetValue("*", out node)) {
+		if (children.TryGetValue("*", out node)) {
 			process.patternPathTokens[pathDepth] = "*";
 			var result = node.WildcardSearch(sentence, process, inputPath, inputPathIndex, traceSearch, matchState, 1);
 			if (result != null) return result;
@@ -247,7 +247,7 @@ public class PatternNode {
 		star.Add("");
 
 		for (endIndex = startIndex + minimumWords; endIndex <= inputPath.Length; endIndex++) {
-			var result = this.Search(subRequest, process, inputPath, endIndex, traceSearch, matchState);
+			var result = Search(subRequest, process, inputPath, endIndex, traceSearch, matchState);
 			if (result != null) {
 				star[starIndex] = endIndex == startIndex
 					? process.Bot.Config.DefaultWildcard
@@ -271,15 +271,15 @@ public class PatternNode {
 	/// <summary>Returns an enumerable that enumerates all templates of this <see cref="PatternNode"/> and its children.</summary>
 	/// <seealso cref="Template"/>
 	public IEnumerable<KeyValuePair<string, Template>> GetTemplates() {
-		if (this.Template != null) yield return new KeyValuePair<string, Template>("", this.Template);
+		if (Template != null) yield return new KeyValuePair<string, Template>("", Template);
 
-		foreach (var child in this.Children) {
+		foreach (var child in Children) {
 			foreach (var entry in child.Value.GetTemplates()) {
 				yield return new KeyValuePair<string, Template>(entry.Key == "" ? child.Key : child.Key + " " + entry.Key, entry.Value);
 			}
 		}
 
-		foreach (var child in this.setChildren) {
+		foreach (var child in setChildren) {
 			var key = "<set>" + child.SetName + "</set>";
 			foreach (var entry in child.Node.GetTemplates()) {
 				yield return new KeyValuePair<string, Template>(entry.Key == "" ? key : key + " " + entry.Key, entry.Value);

@@ -49,6 +49,6 @@ public class UniqTests {
 	public void Evaluate_MultipleVariables() {
 		var test = GetTest();
 		var tag = new Uniq(new("?"), new("attr"), new("?"));
-		Assert.That(test.AssertWarning(() => tag.Evaluate(test.RequestProcess).ToString()), new AnyOfConstraint(new object[] { "1", "0" }));
+		Assert.That(test.AssertWarning(() => tag.Evaluate(test.RequestProcess).ToString()), new AnyOfConstraint(["1", "0"]));
 	}
 }

@@ -7,10 +7,10 @@ public class Triple(string subj, string pred, string obj) {
 	public string Object { get; } = obj;
 
 	public void Deconstruct(out string subj, out string pred, out string obj) {
-		subj = this.Subject;
-		pred = this.Predicate;
-		obj = this.Object;
+		subj = Subject;
+		pred = Predicate;
+		obj = Object;
 	}
 
-	public override string ToString() => $"{{ Subject = {this.Subject}, Predicate = {this.Predicate}, Object = {this.Object} }}";
+	public override string ToString() => $"{{ Subject = {Subject}, Predicate = {Predicate}, Object = {Object} }}";
 }

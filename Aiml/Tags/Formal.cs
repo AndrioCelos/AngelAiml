@@ -6,7 +6,7 @@ namespace Aiml.Tags;
 /// <seealso cref="Lowercase"/><seealso cref="Sentence"/><seealso cref="Uppercase"/>
 public sealed class Formal(TemplateElementCollection children) : RecursiveTemplateTag(children) {
 	public override string Evaluate(RequestProcess process) {
-		var value = new StringBuilder(this.EvaluateChildren(process));
+		var value = new StringBuilder(EvaluateChildren(process));
 
 		var firstLetter = true;
 		for (var i = 0; i < value.Length; ++i) {

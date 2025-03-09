@@ -87,13 +87,13 @@ public sealed class Select : TemplateNode {
 	public Select(TemplateElementCollection? variables, Clause[] clauses) {
 		if (clauses.Length == 0) throw new ArgumentException("<select> element must contain at least one clause.", nameof(clauses));
 		if (!clauses[0].Affirm) throw new ArgumentException("<select> element first clause cannot be <notq>.", nameof(clauses));
-		this.Variables = variables;
-		this.Clauses = clauses;
+		Variables = variables;
+		Clauses = clauses;
 	}
 
 	private IReadOnlyCollection<string> GetDefaultVariables() {
 		var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-		foreach (var clause in this.Clauses) {
+		foreach (var clause in Clauses) {
 			if (clause.Subject.Count == 1 && clause.Subject.First() is TemplateText subjNode && subjNode.Text.Trim() is var subj && subj.IsClauseVariable())
 				set.Add(subj);
 			if (clause.Subject.Count == 1 && clause.Predicate.First() is TemplateText predNode && predNode.Text.Trim() is var pred && pred.IsClauseVariable())
@@ -105,10 +105,10 @@ public sealed class Select : TemplateNode {
 	}
 
 	public override string Evaluate(RequestProcess process) {
-		var resolvedClauses = (from c in this.Clauses select c.Evaluate(process)).ToList();
-		var visibleVars = this.Variables != null
-			? this.Variables.Evaluate(process).Split((char[]?) null, StringSplitOptions.RemoveEmptyEntries)
-			: this.GetDefaultVariables();
+		var resolvedClauses = (from c in Clauses select c.Evaluate(process)).ToList();
+		var visibleVars = Variables != null
+			? Variables.Evaluate(process).Split((char[]?) null, StringSplitOptions.RemoveEmptyEntries)
+			: GetDefaultVariables();
 
 		// Begin a depth-first search for matching tuples.
 		var tuples = SelectFromRemainingClauses(process, null, resolvedClauses, 0);
@@ -185,6 +185,6 @@ public sealed class Select : TemplateNode {
 			}
 		}
 
-		return new Select(vars, clauses.ToArray());
+		return new Select(vars, [.. clauses]);
 	}
 }
