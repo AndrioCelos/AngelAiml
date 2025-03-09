@@ -53,8 +53,11 @@ public class User {
 
 	public void AddResponse(Response response) {
 		this.Responses.Add(response);
-		if (!(this.Bot.Config.ThatExcludeEmptyResponse && string.IsNullOrWhiteSpace(response.Text)))
-			this.That = string.IsNullOrWhiteSpace(response.Text) ? this.Bot.Config.DefaultPredicate : response.Text;
+		var that = this.Bot.SentenceSplit(response.Text, false).Select(this.Bot.Normalize).LastOrDefault(s => !string.IsNullOrWhiteSpace(s));
+		if (that is not null)
+			this.That = that;
+		else if (this.Bot.Config.ThatExcludeEmptyResponse)
+			this.That = that ?? this.Bot.Config.DefaultPredicate;
 	}
 	public void AddRequest(Request request) => this.Requests.Add(request);
 
