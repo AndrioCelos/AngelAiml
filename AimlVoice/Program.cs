@@ -5,6 +5,7 @@ using System.Speech.Synthesis;
 using System.Text;
 using Aiml;
 using Aiml.Media;
+using Microsoft.Extensions.Logging;
 
 namespace AimlVoice;
 public class Program {
@@ -113,8 +114,8 @@ public class Program {
 			AimlLoader.AddExtensions(path);
 		}
 
+		var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
 		bot = new Bot(botPath);
-		bot.LogMessage += Bot_LogMessage;
 		bot.PostbackResponse += (s, e) => ProcessOutput(e.Response);
 		bot.LoadConfig();
 		bot.LoadAiml();
@@ -364,17 +365,6 @@ public class Program {
 			Console.WriteLine($"Response: {response}");
 			Console.ResetColor();
 		}
-	}
-
-	private static void Bot_LogMessage(object? sender, LogMessageEventArgs e) {
-		switch (e.Level) {
-			case LogLevel.Warning: Console.ForegroundColor = ConsoleColor.Yellow; break;
-			case LogLevel.Gossip: Console.ForegroundColor = ConsoleColor.Blue; break;
-			case LogLevel.Chat: Console.ForegroundColor = ConsoleColor.Blue; break;
-			case LogLevel.Diagnostic: Console.ForegroundColor = ConsoleColor.DarkBlue; break;
-		}
-		Console.WriteLine($"[{e.Level}] {e.Message}");
-		Console.ResetColor();
 	}
 
 	static void Recognizer_SpeechRecognized(object? sender, SpeechRecognizedEventArgs e) {

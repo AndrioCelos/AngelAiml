@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 
 namespace Aiml.Tags;
 /// <summary>Sends the content as a command to a system command interpreter and returns the output of the command via standard output.</summary>
@@ -22,10 +23,10 @@ namespace Aiml.Tags;
 ///		<para>This element is defined by the AIML 1.1 specification.</para>
 /// </remarks>
 /// <seealso cref="SraiX"/>
-public sealed class System(TemplateElementCollection children) : RecursiveTemplateTag(children) {
+public sealed partial class System(TemplateElementCollection children) : RecursiveTemplateTag(children) {
 	public override string Evaluate(RequestProcess process) {
 		if (!process.Bot.Config.EnableSystem) {
-			process.Log(LogLevel.Warning, $"In element <system>: This element is disabled.");
+			LogDisabled(GetLogger(process, true));
 			return process.Bot.Config.SystemFailedMessage;
 		}
 
@@ -36,7 +37,7 @@ public sealed class System(TemplateElementCollection children) : RecursiveTempla
 			if (Environment.OSVersion.Platform < PlatformID.Unix) {
 				// Windows
 				process2.StartInfo = new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "cmd.exe"), "/Q /D /C \"" +
-					Regex.Replace(command, @"[/\\:*?""<>^]", "^$0") + "\"");
+					WindowsEscapeRegex().Replace(command, "^$0") + "\"");
 				//    /C string   Carries out the command specified by string and then terminates.
 				//    /Q          Turns echo off.
 				//    /D          Disable execution of AutoRun commands from registry (see 'CMD /?').
@@ -45,15 +46,15 @@ public sealed class System(TemplateElementCollection children) : RecursiveTempla
 				process2.StartInfo = new ProcessStartInfo(Path.Combine(Path.GetPathRoot(Environment.SystemDirectory)!, "bin", "sh"),
 					command.Replace(@"\", @"\\").Replace("\"", "\\\""));
 			} else {
-				process.Log(LogLevel.Warning, $"In element <system>: This element is not supported on {Environment.OSVersion.Platform}.");
-				return process.Bot.Config.SystemFailedMessage;
+				LogPlatformNotSupported(GetLogger(process, true), Environment.OSVersion.Platform);
+ 				return process.Bot.Config.SystemFailedMessage;
 			}
 
 			process2.StartInfo.UseShellExecute = false;
 			process2.StartInfo.RedirectStandardOutput = true;
 			process2.StartInfo.RedirectStandardError = true;
 
-			process.Log(LogLevel.Diagnostic, $"In element <system>: executing {process2.StartInfo.FileName} {process2.StartInfo.Arguments}");
+			LogExecuting(GetLogger(process), process2.StartInfo.FileName, process2.StartInfo.Arguments);
 
 			process2.Start();
 
@@ -62,14 +63,44 @@ public sealed class System(TemplateElementCollection children) : RecursiveTempla
 			process2.WaitForExit((int) process.Bot.Config.Timeout);
 
 			if (!process2.HasExited)
-				process.Log(LogLevel.Diagnostic, $"In element <system>: the process timed out.");
+				LogTimeout(GetLogger(process, true));
 			else if (process2.ExitCode != 0)
-				process.Log(LogLevel.Diagnostic, $"In element <system>: the process exited with code {process2.ExitCode}.");
+				LogExit(GetLogger(process), process2.ExitCode);
 
 			return output;
 		} catch (Exception ex) {
-			process.Log(LogLevel.Warning, $"In element <system>: The command failed: {ex}");
+			LogProcessException(GetLogger(process, true), ex);
 			return process.Bot.Config.SystemFailedMessage;
 		}
 	}
+
+#if NET8_0_OR_GREATER
+	[GeneratedRegex(@"[/\\:*?""<>^]")]
+	private static partial Regex WindowsEscapeRegex();
+#else
+	private static readonly Regex windowsEscapeRegex = new Regex(@"[/\\:*?""<>^]", RegexOptions.Compiled);
+	private static Regex WindowsEscapeRegex() => windowsEscapeRegex;
+#endif
+
+	#region Log templates
+
+	[LoggerMessage(LogLevel.Warning, "In element <system>: This element is disabled.")]
+	private static partial void LogDisabled(ILogger logger);
+
+	[LoggerMessage(LogLevel.Warning, "In element <system>: This element is not supported on {Platform}.")]
+	private static partial void LogPlatformNotSupported(ILogger logger, PlatformID platform);
+
+	[LoggerMessage(LogLevel.Trace, "In element <system>: executing {FileName} {Arguments}")]
+	private static partial void LogExecuting(ILogger logger, string fileName, string arguments);
+
+	[LoggerMessage(LogLevel.Warning, "In element <system>: the process timed out.")]
+	private static partial void LogTimeout(ILogger logger);
+
+	[LoggerMessage(LogLevel.Trace, "In element <system>: the process exited with code {ExitCode}.")]
+	private static partial void LogExit(ILogger logger, int exitCode);
+
+	[LoggerMessage(LogLevel.Warning, "In element <system>: exception running a process")]
+	private static partial void LogProcessException(ILogger logger, Exception ex);
+
+	#endregion
 }

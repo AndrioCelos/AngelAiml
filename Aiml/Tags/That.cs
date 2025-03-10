@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+
 namespace Aiml.Tags;
 /// <summary>Returns a sentence previously output by the bot for the current session.</summary>
 /// <remarks>
@@ -12,7 +14,7 @@ namespace Aiml.Tags;
 ///		<para>This element is defined by the AIML 1.1 specification.</para>
 /// </remarks>
 /// <seealso cref="Input"/><seealso cref="Request"/><seealso cref="Response"/>
-public sealed class That(TemplateElementCollection? index) : TemplateNode {
+public sealed partial class That(TemplateElementCollection? index) : TemplateNode {
 	public TemplateElementCollection? Index { get; set; } = index;
 
 	public override string Evaluate(RequestProcess process) {
@@ -26,10 +28,17 @@ public sealed class That(TemplateElementCollection? index) : TemplateNode {
 		for (var i = 0; i < fields.Length; i++) fields[i] = fields[i].Trim();
 #endif
 		if (fields.Length != 2 || !int.TryParse(fields[0], out var responseIndex) || responseIndex <= 0 || !int.TryParse(fields[1], out var sentenceIndex) || sentenceIndex <= 0) {
-			process.Log(LogLevel.Warning, $"In element <that>: 'index' was not valid: {indices}");
+			LogInvalidIndex(GetLogger(process, true), indices);
 			return process.Bot.Config.DefaultHistory;
 		}
 
 		return process.User.GetThat(responseIndex, sentenceIndex);
 	}
+
+	#region Log templates
+
+	[LoggerMessage(LogLevel.Warning, "In element <that>: 'index' was not valid: {Index}")]
+	private static partial void LogInvalidIndex(ILogger logger, string index);
+
+	#endregion
 }

@@ -1,4 +1,6 @@
-﻿namespace Aiml.Tags;
+﻿using Microsoft.Extensions.Logging;
+
+namespace Aiml.Tags;
 /// <summary><para>Returns an element of a single triple matching a clause.</para></summary>
 /// <remarks>
 ///		<para>This element has the following attributes:</para>
@@ -28,7 +30,7 @@
 ///		<para>This example may return a bot-defined text identifying a person named Alan, such as '10099'. The triple may be defined by the <c>addtriple</c> element.</para>
 /// </example>
 /// <seealso cref="DeleteTriple"/><seealso cref="DeleteTriple"/><seealso cref="Select"/>
-public sealed class Uniq(TemplateElementCollection subj, TemplateElementCollection pred, TemplateElementCollection obj) : TemplateNode {
+public sealed partial class Uniq(TemplateElementCollection subj, TemplateElementCollection pred, TemplateElementCollection obj) : TemplateNode {
 	public TemplateElementCollection Subject { get; } = subj;
 	public TemplateElementCollection Predicate { get; } = pred;
 	public TemplateElementCollection Object { get; } = obj;
@@ -44,17 +46,27 @@ public sealed class Uniq(TemplateElementCollection subj, TemplateElementCollecti
 
 		var variables = (subj is null ? 1 : 0) + (pred is null ? 1 : 0) + (obj is null ? 1 : 0);
 		if (variables != 1) {
-			process.Log(LogLevel.Warning, $"In element <uniq>: The clause contains {variables} variables; it should contain exactly one. {{ Subject = {subj}, Predicate = {pred}, Object = {obj} }}");
+			LogInvalidClause(GetLogger(process, true), variables, subj, pred, obj);
 			if (variables == 0) return process.Bot.Config.DefaultTriple;
 		}
 
 		// Find triples that match.
 		var triple = process.Bot.Triples.Match(subj, pred, obj).FirstOrDefault();
 		if (triple is null) {
-			process.Log(LogLevel.Diagnostic, $"In element <uniq>: No matching triple was found. {{ Subject = {subj}, Predicate = {pred}, Object = {obj} }}");
+			LogNoMatch(GetLogger(process), subj, pred, obj);
 			return process.Bot.Config.DefaultTriple;
 		}
 
 		return obj is null ? triple.Object : subj is null ? triple.Subject : triple.Predicate;
 	}
+
+	#region Log templates
+
+	[LoggerMessage(LogLevel.Warning, "In element <uniq>: The clause contains {NumVariables} variables; it should contain exactly one. {{ Subject = {Subject}, Predicate = {Predicate}, Object = {Object} }}")]
+	private static partial void LogInvalidClause(ILogger logger, int numVariables, string? subject, string? predicate, string? @object);
+
+	[LoggerMessage(LogLevel.Trace, "In element <uniq>: No matching triple was found. {{ Subject = {Subject}, Predicate = {Predicate}, Object = {Object} }}")]
+	private static partial void LogNoMatch(ILogger logger, string? subject, string? predicate, string? @object);
+
+	#endregion
 }

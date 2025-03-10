@@ -16,5 +16,5 @@ public sealed class TopicStar(TemplateElementCollection? index) : TemplateNode {
 	public TemplateElementCollection? Index { get; private set; } = index;
 
 	public override string Evaluate(RequestProcess process)
-		=> TryParseIndex("topicstar", process, Index, out var index) ? process.GetTopicStar(index) : process.Bot.Config.DefaultWildcard;
+		=> TryParseIndex(process, Index, out var index) ? process.GetTopicStar(index) : process.Bot.Config.DefaultWildcard;
 }

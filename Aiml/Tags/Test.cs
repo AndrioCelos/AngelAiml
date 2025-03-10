@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 
 namespace Aiml.Tags;
 /// <summary>Runs an AIML unit test and returns the element's content.</summary>
@@ -22,7 +23,7 @@ namespace Aiml.Tags;
 ///		</list>
 ///		<para>This element is part of an extension to AIML.</para>
 /// </remarks>
-public sealed class Test(string name, TemplateElementCollection expectedResponse, bool regex, TemplateElementCollection children) : RecursiveTemplateTag(children) {
+public sealed partial class Test(string name, TemplateElementCollection expectedResponse, bool regex, TemplateElementCollection children) : RecursiveTemplateTag(children) {
 	public string Name { get; } = name;
 	public bool UseRegex { get; } = regex;
 	public TemplateElementCollection ExpectedResponse { get; } = expectedResponse;
@@ -36,28 +37,28 @@ public sealed class Test(string name, TemplateElementCollection expectedResponse
 	}
 
 	public override string Evaluate(RequestProcess process) {
-		process.Log(LogLevel.Info, $"In element <test>: running test {Name}");
+		LogRunningTest(GetLogger(process, true), Name);
 		var text = EvaluateChildren(process);
-		process.Log(LogLevel.Diagnostic, $"In element <test>: processing text '{text}'.");
+		LogRequest(GetLogger(process), text);
 		var newRequest = new Aiml.Request(text, process.User, process.Bot);
 		text = process.Bot.ProcessRequest(newRequest, false, false, process.RecursionDepth + 1, out var duration).ToString().Trim();
-		process.Log(LogLevel.Diagnostic, $"In element <test>: the request returned '{text}'.");
+		LogResponse(GetLogger(process), text);
 
 		if (process.testResults != null) {
 			var expectedResponse = ExpectedResponse.Evaluate(process).Trim();
 			TestResult result;
 			if (UseRegex) {
-				var pattern = Regex.Replace(expectedResponse, @"\s+", @"\s+");
+				var pattern = WhitespaceRegex().Replace(expectedResponse, @"\s+");
 				try {
 					var regex = new Regex(pattern, RegexOptions.IgnoreCase, TimeSpan.FromSeconds(5));
 					result = regex.IsMatch(text.Trim())
 						? TestResult.Pass(duration)
 						: TestResult.Failure($"Expected regex: {expectedResponse}\nActual response: {text}", duration);
 				} catch (ArgumentException ex) {
-					process.Log(LogLevel.Warning, $"In element <test>: Regex was invalid: {ex.Message}: {pattern}");
+					LogInvalidRegex(GetLogger(process, true), ex.Message, pattern);
 					result = TestResult.Failure($"Regex was invalid: {pattern}", duration);
 				} catch (RegexMatchTimeoutException) {
-					process.Log(LogLevel.Warning, $"In element <test>: Regex check timed out: {pattern}");
+					LogRegexTimeout(GetLogger(process, true), pattern);
 					result = TestResult.Failure("Regex check timed out", duration);
 				}
 			} else {
@@ -67,8 +68,38 @@ public sealed class Test(string name, TemplateElementCollection expectedResponse
 			}
 			process.testResults[Name] = result;
 		} else
-			process.Log(LogLevel.Warning, "In element <test>: Tests are not being used.");
+			LogDisabled(GetLogger(process, true));
 
 		return text;
 	}
+
+#if NET8_0_OR_GREATER
+	[GeneratedRegex(@"\s+")]
+	private static partial Regex WhitespaceRegex();
+#else
+	private static readonly Regex whitespaceRegex = new Regex(@"\s+", RegexOptions.Compiled);
+	private static Regex WhitespaceRegex() => whitespaceRegex;
+#endif
+
+	#region Log templates
+
+	[LoggerMessage(LogLevel.Information, "In element <test>: running test {Name}")]
+	private static partial void LogRunningTest(ILogger logger, string name);
+
+	[LoggerMessage(LogLevel.Trace, "In element <test>: processing text '{Request}'.")]
+	private static partial void LogRequest(ILogger logger, string request);
+
+	[LoggerMessage(LogLevel.Trace, "In element <test>: the request returned '{Response}'.")]
+	private static partial void LogResponse(ILogger logger, string response);
+
+	[LoggerMessage(LogLevel.Warning, "In element <test>: Regex was invalid: {Message}: {Pattern}")]
+	private static partial void LogInvalidRegex(ILogger logger, string message, string pattern);
+
+	[LoggerMessage(LogLevel.Warning, "In element <test>: Regex check timed out: {Pattern}")]
+	private static partial void LogRegexTimeout(ILogger logger, string pattern);
+
+	[LoggerMessage(LogLevel.Warning, "In element <test>: Tests are not being used.")]
+	private static partial void LogDisabled(ILogger logger);
+
+	#endregion
 }

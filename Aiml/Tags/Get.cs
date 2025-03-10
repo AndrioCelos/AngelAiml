@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+
 namespace Aiml.Tags;
 /// <summary>Returns the value of a predicate for the current user, local variable or tuple variable.</summary>
 /// <remarks>
@@ -20,7 +22,7 @@ namespace Aiml.Tags;
 ///		<para>This element is defined by the AIML 1.1 specification. Local variables are defined by the AIML 2.0 specification. Tuples are part of an extension to AIML derived from Program AB and Program Y.</para>
 /// </remarks>
 /// <seealso cref="Select"/><seealso cref="Set"/>
-public sealed class Get(TemplateElementCollection key, TemplateElementCollection? tuple, bool local) : TemplateNode {
+public sealed partial class Get(TemplateElementCollection key, TemplateElementCollection? tuple, bool local) : TemplateNode {
 	public TemplateElementCollection Key { get; } = key;
 	public TemplateElementCollection? TupleString { get; } = tuple;
 	public bool LocalVar { get; } = local;
@@ -39,7 +41,7 @@ public sealed class Get(TemplateElementCollection key, TemplateElementCollection
 			// Get a value from a tuple.
 			var variable = Key.Evaluate(process);
 			if (!variable.IsClauseVariable()) {
-				process.Log(LogLevel.Warning, $"In element <get>: 'var' was not a valid tuple query variable: {variable}");
+				LogInvalidTupleVariable(GetLogger(process, true), variable);
 				return process.Bot.Config.DefaultPredicate;
 			}
 			var tupleString = TupleString.Evaluate(process);
@@ -49,4 +51,11 @@ public sealed class Get(TemplateElementCollection key, TemplateElementCollection
 		// Get a user predicate or local variable.
 		return LocalVar ? process.GetVariable(Key.Evaluate(process)) : process.User.GetPredicate(Key.Evaluate(process));
 	}
+
+	#region Log templates
+
+	[LoggerMessage(LogLevel.Warning, "In element <get>: 'var' was not a valid tuple query variable: {Variable}")]
+	private static partial void LogInvalidTupleVariable(ILogger logger, string variable);
+
+	#endregion
 }

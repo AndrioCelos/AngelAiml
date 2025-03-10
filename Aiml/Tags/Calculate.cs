@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using Microsoft.Extensions.Logging;
 
 namespace Aiml.Tags;
 /// <summary>Evaluates the content as an arithmetic expression.</summary>
@@ -47,12 +48,14 @@ namespace Aiml.Tags;
 ///		</list>
 ///		<para>This element is part of an extension to AIML.</para>
 /// </remarks>
-public sealed class Calculate(TemplateElementCollection children) : RecursiveTemplateTag(children) {
+public sealed partial class Calculate(TemplateElementCollection children) : RecursiveTemplateTag(children) {
+	private const string ERROR_RESPONSE = "unknown";
+
 	public override string Evaluate(RequestProcess process) {
 		var s = EvaluateChildren(process);
 		if (string.IsNullOrWhiteSpace(s)) {
-			process.Log(LogLevel.Warning, "In element <calculate>: syntax error: " + s);
-			return "unknown";
+			LogSyntaxError(GetLogger(process, true), s);
+			return ERROR_RESPONSE;
 		}
 
 		try {
@@ -60,8 +63,8 @@ public sealed class Calculate(TemplateElementCollection children) : RecursiveTem
 			var result = EvaluateExpr(process, s, 0, ref pos);
 			return pos >= s.Length ? result.ToString() : throw new FormatException();
 		} catch (FormatException) {
-			process.Log(LogLevel.Warning, "In element <calculate>: syntax error: " + s);
-			return "unknown";
+			LogSyntaxError(GetLogger(process, true), s);
+			return ERROR_RESPONSE;
 		}
 	}
 
@@ -270,4 +273,11 @@ public sealed class Calculate(TemplateElementCollection children) : RecursiveTem
 #endif
 	private static double ThrowArgumentCountException(string functionName, List<double> list, int expected)
 		=> throw new FormatException($"Invalid number of arguments for {functionName}: expected {expected} but found {list.Count}");
+
+	#region Log templates
+
+	[LoggerMessage(LogLevel.Warning, "In element <calculate>: syntax error: {Content}")]
+	private static partial void LogSyntaxError(ILogger logger, string content);
+
+	#endregion
 }

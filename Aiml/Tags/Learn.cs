@@ -1,4 +1,5 @@
 using System.Xml.Linq;
+using Microsoft.Extensions.Logging;
 
 namespace Aiml.Tags;
 /// <summary>Processes the content as AIML and adds it to the bot's brain, temporarily and for the current user only.</summary>
@@ -8,7 +9,7 @@ namespace Aiml.Tags;
 ///		<para>This element is defined by the AIML 2.0 specification.</para>
 /// </remarks>
 /// <seealso cref="AddTriple"/><seealso cref="LearnF"/><seealso cref="Set"/>
-public sealed class Learn : TemplateNode {
+public sealed partial class Learn : TemplateNode {
 	public XElement Element { get; }
 
 	public Learn(XElement el) {
@@ -69,7 +70,7 @@ public sealed class Learn : TemplateNode {
 		ProcessXml(el, process);
 
 		// Learn the result.
-		process.Log(LogLevel.Diagnostic, $"In element <learn>: learning new category for {process.User.ID}");
+		LogLearn(GetLogger(process), process.User.ID);
 		process.Bot.AimlLoader.ForwardCompatible = false;
 		process.Bot.AimlLoader.LoadAimlInto(process.User.Graphmaster, el);
 
@@ -89,4 +90,11 @@ public sealed class Learn : TemplateNode {
 			}
 		}
 	}
+
+	#region Log templates
+
+	[LoggerMessage(LogLevel.Debug, "In element <learn>: learning new category for {UserId}")]
+	private static partial void LogLearn(ILogger logger, string userId);
+
+	#endregion
 }

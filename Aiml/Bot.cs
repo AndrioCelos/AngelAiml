@@ -3,10 +3,11 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Aiml.Maps;
 using Aiml.Sets;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aiml;
-public class Bot {
-
+public partial class Bot {
 	public static Version Version { get; } = typeof(Bot).Assembly.GetName().Version!;
 
 	public string ConfigDirectory { get; set; }
@@ -31,19 +32,25 @@ public class Bot {
 	public AimlLoader AimlLoader { get; }
 
 	public event EventHandler<GossipEventArgs>? Gossip;
-	public event EventHandler<LogMessageEventArgs>? LogMessage;
 	public event EventHandler<PostbackRequestEventArgs>? PostbackRequest;
 	public event EventHandler<PostbackResponseEventArgs>? PostbackResponse;
 
 	public void OnGossip(GossipEventArgs e) => Gossip?.Invoke(this, e);
-	public void OnLogMessage(LogMessageEventArgs e) => LogMessage?.Invoke(this, e);
 	public void OnPostbackRequest(PostbackRequestEventArgs e) => PostbackRequest?.Invoke(this, e);
 	public void OnPostbackResponse(PostbackResponseEventArgs e) => PostbackResponse?.Invoke(this, e);
 
 	internal readonly Random Random = new();
+	internal readonly ILoggerFactory? loggerFactory;
+	internal readonly ILogger<Bot> logger;
+	internal readonly Dictionary<Type, ILogger> loggers = [];
+	private int? vocabulary;
 
-	public Bot() : this("config") { }
-	public Bot(string configDirectory) {
+	public Bot() : this("config", null) { }
+	public Bot(ILoggerFactory loggerFactory) : this("config", loggerFactory) { }
+	public Bot(string configDirectory) : this(configDirectory, null) { }
+	public Bot(string configDirectory, ILoggerFactory? loggerFactory) {
+		this.loggerFactory = loggerFactory;
+		logger = loggerFactory?.CreateLogger<Bot>() ?? NullLogger<Bot>.Instance;
 		AimlLoader = new(this);
 		ConfigDirectory = configDirectory;
 
@@ -56,7 +63,7 @@ public class Bot {
 		Maps.Add("singular", new SingularMap(inflector));
 		Maps.Add("plural", new PluralMap(inflector));
 	}
-	internal Bot(Random random) : this() => Random = random;
+	internal Bot(Random random, ILoggerFactory loggerFactory) : this(loggerFactory) => Random = random;
 
 	public void LoadAiml() => AimlLoader.LoadAimlFiles();
 
@@ -107,11 +114,11 @@ public class Bot {
 
 	private void LoadSets(string directory) {
 		// TODO: Implement remote sets and maps
-		Log(LogLevel.Info, "Loading sets from " + directory + ".");
+		LogLoadingSets(directory);
 
 		foreach (var file in Directory.EnumerateFiles(directory, "*.txt")) {
 			if (Sets.ContainsKey(Path.GetFileNameWithoutExtension(file))) {
-				Log(LogLevel.Warning, "Duplicate set name '" + Path.GetFileNameWithoutExtension(file) + "'.");
+				LogDuplicateSetName(Path.GetFileNameWithoutExtension(file));
 				continue;
 			}
 
@@ -174,15 +181,15 @@ public class Bot {
 			InvalidateVocabulary();
 		}
 
-		Log(LogLevel.Info, "Loaded " + Sets.Count + " set(s).");
+		LogLoadedSets(Sets.Count);
 	}
 
 	private void LoadMaps(string directory) {
-		Log(LogLevel.Info, "Loading maps from " + directory + ".");
+		LogLoadingMaps(directory);
 
 		foreach (var file in Directory.EnumerateFiles(directory, "*.txt")) {
 			if (Maps.ContainsKey(Path.GetFileNameWithoutExtension(file))) {
-				Log(LogLevel.Warning, "Duplicate map name '" + Path.GetFileNameWithoutExtension(file) + "'.");
+				LogDuplicateMapName(Path.GetFileNameWithoutExtension(file));
 				continue;
 			}
 
@@ -194,19 +201,23 @@ public class Bot {
 				if (line is null) break;
 
 				// Remove comments.
-				line = Regex.Replace(line, @"\\([\\#])|#.*", "$1");
+				line = MapCommentRegex().Replace(line, "$1");
 				if (string.IsNullOrWhiteSpace(line)) continue;
 
 				var pos = line.IndexOf(':');
 				if (pos < 0)
-					Log(LogLevel.Warning, "Map '" + Path.GetFileNameWithoutExtension(file) + "' contains a badly formatted line: " + line);
+					LogMapSyntaxError(Path.GetFileNameWithoutExtension(file), line);
 				else {
 					var key = line[..pos].Trim();
 					var value = line[(pos + 1)..].Trim();
-					if (map.ContainsKey(key))
-						Log(LogLevel.Warning, "Map '" + Path.GetFileNameWithoutExtension(file) + "' contains duplicate key '" + key + "'.");
-					else
+#if NET6_0_OR_GREATER
+					if (!map.TryAdd(key, value))
+#else
+					if (!map.ContainsKey(key))
 						map.Add(key, value);
+					else
+#endif
+						LogMapDuplicateKey(Path.GetFileNameWithoutExtension(file), key);
 				}
 			}
 
@@ -214,82 +225,71 @@ public class Bot {
 			InvalidateVocabulary();
 		}
 
-		Log(LogLevel.Info, "Loaded " + Maps.Count + " map(s).");
+		LogLoadedMaps(Maps.Count);
 	}
 
 	private void LoadTriples(string filePath) {
 		if (!File.Exists(filePath)) {
-			Log(LogLevel.Info, "Triples file (" + filePath + ") was not found.");
+			LogTriplesFileNotFound(filePath);
 			return;
 		}
 
-		Log(LogLevel.Info, "Loading maps from " + filePath + ".");
+		LogLoadingTriples(filePath);
 		using (var reader = new StreamReader(filePath)) {
 			while (!reader.EndOfStream) {
 				var line = reader.ReadLine();
 				if (string.IsNullOrWhiteSpace(line)) continue;
 				var fields = line.Split([':'], 3);
 				if (fields.Length != 3)
-					Log(LogLevel.Warning, "triples.txt contains a badly formatted line: " + line);
+					LogTriplesSyntaxError(line);
 				else
 					Triples.Add(fields[0], fields[1], fields[2]);
 			}
 		}
 
-		Log(LogLevel.Info, "Loaded " + Triples.Count + " triple(s).");
+		LogLoadedTriples(Triples.Count);
 	}
 
-	private bool logDirectoryCreated = false;
-	private int? vocabulary;
+	internal ILogger GetLogger(Type categoryType) {
+		if (loggers.TryGetValue(categoryType, out var logger)) return logger;
+		if (loggerFactory is null) return this.logger;
 
-	public void Log(LogLevel level, string message) {
-		if (level < Config.LogLevel) return;
-
-		var e = new LogMessageEventArgs(level, message);
-		OnLogMessage(e);
-		if (e.Handled) return;
-
-		if (!logDirectoryCreated) {
-			Directory.CreateDirectory(Path.Combine(ConfigDirectory, Config.LogDirectory));
-			logDirectoryCreated = true;
-		};
-
-		try {
-			var writer = new StreamWriter(Path.Combine(ConfigDirectory, Config.LogDirectory, DateTime.Now.ToString("yyyyMMdd") + ".log"), true);
-			writer.WriteLine(DateTime.Now.ToString("[HH:mm:ss]") + "\t[" + level + "]\t" + message);
-			writer.Close();
-		} catch (IOException) { }
+		logger = loggerFactory.CreateLogger(categoryType.FullName!);
+		loggers[categoryType] = logger;
+		return logger;
 	}
 
 	internal void WriteGossip(RequestProcess process, string message) {
 		var e = new GossipEventArgs(message);
 		OnGossip(e);
 		if (e.Handled) return;
-		process.Log(LogLevel.Gossip, "Gossip from " + process.User.ID + ": " + message);
+		LogGossip(process.User.ID, message);
 	}
 
 	public Response Chat(Request request) => Chat(request, false);
 	public Response Chat(Request request, bool trace) {
-		Log(LogLevel.Chat, request.User.ID + ": " + request.Text);
+		LogChatRequest(request.User.ID, request.Text);
 		request.User.AddRequest(request);
 
 		var response = ProcessRequest(request, trace, false, 0, out _);
 
 		if (!Config.BotProperties.TryGetValue("name", out var botName)) botName = "Robot";
-		Log(LogLevel.Chat, botName + ": " + response.ToString());
+		LogChatResponse(botName, request.User.ID, response.ToString());
 
 		response.ProcessOobElements();
 		request.User.AddResponse(response);
 		return response;
 	}
 	internal Response Chat(Request request, bool trace, bool isPostback) {
-		Log(LogLevel.Chat, (isPostback ? "[Postback] " : "") + request.User.ID + ": " + request.Text);
+		if (isPostback) LogChatRequestPostback(request.User.ID, request.Text);
+		else LogChatRequest(request.User.ID, request.Text);
+
 		request.User.AddRequest(request);
 
 		var response = ProcessRequest(request, trace, false, 0, out _);
 
 		if (!Config.BotProperties.TryGetValue("name", out var botName)) botName = "Robot";
-		Log(LogLevel.Chat, botName + ": " + response.ToString());
+		LogChatResponse(botName, request.User.ID, response.ToString());
 
 		response.ProcessOobElements();
 		request.User.AddResponse(response);
@@ -306,26 +306,26 @@ public class Bot {
 		foreach (var sentence in request.Sentences) {
 			var process = new RequestProcess(sentence, recursionDepth, useTests);
 
-			process.Log(LogLevel.Diagnostic, $"Normalized path: {sentence.Text} <THAT> {that} <TOPIC> {topic}");
+			LogNormalizedPath(sentence.Text, that, topic);
 
 			string output;
 			try {
 				var template = request.User.Graphmaster.Search(sentence, process, that, trace);
 				if (template != null) {
 					process.template = template;
-					process.Log(LogLevel.Diagnostic, $"Input matched user-specific category '{process.Path}'.");
+					LogMatchUserSpecificCategory(process.Path);
 				} else {
 					template = Graphmaster.Search(sentence, process, that, trace);
 					if (template != null) {
 						process.template = template;
-						process.Log(LogLevel.Diagnostic, $"Input matched category '{process.Path}' in {template.Uri} line {template.LineNumber}.");
+						LogMatchCategory(process.Path, template.Uri, template.LineNumber);
 					}
 				}
 
 				if (template != null) {
 					output = template.Content.Evaluate(process);
 				} else {
-					process.Log(LogLevel.Warning, $"No match for input '{sentence.Text}'.");
+					LogNoMatch(sentence.Text);
 					output = Config.DefaultResponse;
 				}
 			} catch (TimeoutException) {
@@ -428,4 +428,76 @@ public class Bot {
 	}
 
 	internal void InvalidateVocabulary() => vocabulary = null;
+
+#if NET8_0_OR_GREATER
+	[GeneratedRegex(@"\\([\\#])|#.*")]
+	private static partial Regex MapCommentRegex();
+#else
+	private static readonly Regex mapCommentRegex = new(@"\\([\\#])|#.*", RegexOptions.Compiled);
+	private static Regex MapCommentRegex() => mapCommentRegex;
+#endif
+
+	#region Log templates
+
+	[LoggerMessage(LogLevel.Information, "Loading sets from {Directory}.")]
+	private partial void LogLoadingSets(string directory);
+
+	[LoggerMessage(LogLevel.Warning, "Duplicate set name '{SetName}'.")]
+	private partial void LogDuplicateSetName(string setName);
+
+	[LoggerMessage(LogLevel.Information, "Loaded {Count} set(s).")]
+	private partial void LogLoadedSets(int count);
+
+	[LoggerMessage(LogLevel.Information, "Loading maps from {Directory}.")]
+	private partial void LogLoadingMaps(string directory);
+
+	[LoggerMessage(LogLevel.Warning, "Duplicate map name '{MapName}'.")]
+	private partial void LogDuplicateMapName(string mapName);
+
+	[LoggerMessage(LogLevel.Warning, "Map '{MapName}' contains a badly formatted line: {Line}.")]
+	private partial void LogMapSyntaxError(string mapName, string line);
+
+	[LoggerMessage(LogLevel.Warning, "Map '{MapName}' contains duplicate key '{Key}'.")]
+	private partial void LogMapDuplicateKey(string mapName, string key);
+
+	[LoggerMessage(LogLevel.Information, "Loaded {Count} map(s).")]
+	private partial void LogLoadedMaps(int count);
+
+	[LoggerMessage(LogLevel.Information, "Triples file ({FilePath}) was not found.")]
+	private partial void LogTriplesFileNotFound(string filePath);
+
+	[LoggerMessage(LogLevel.Information, "Loading triples from {FilePath}.")]
+	private partial void LogLoadingTriples(string filePath);
+
+	[LoggerMessage(LogLevel.Warning, "Triples file contains a badly formatted line: {Line}.")]
+	private partial void LogTriplesSyntaxError(string line);
+
+	[LoggerMessage(LogLevel.Information, "Loaded {Count} triple(s).")]
+	private partial void LogLoadedTriples(int count);
+
+	[LoggerMessage(LogLevel.Warning, "Gossip from {UserId}: {Message}")]
+	private partial void LogGossip(string userId, string message);
+
+	[LoggerMessage(LogLevel.Information, "{UserId}: {Message}")]
+	private partial void LogChatRequest(string userId, string message);
+
+	[LoggerMessage(LogLevel.Information, "{UserId} [Postback]: {Message}")]
+	private partial void LogChatRequestPostback(string userId, string message);
+
+	[LoggerMessage(LogLevel.Information, "{BotName} -> {UserId}: {Message}")]
+	private partial void LogChatResponse(string botName, string userId, string message);
+
+	[LoggerMessage(LogLevel.Trace, "Normalized path: {Message} <THAT> {That} <TOPIC> {Topic}")]
+	private partial void LogNormalizedPath(string message, string that, string topic);
+
+	[LoggerMessage(LogLevel.Trace, "Input matched user-specific category '{Path}'.")]
+	private partial void LogMatchUserSpecificCategory(string path);
+
+	[LoggerMessage(LogLevel.Trace, "Input matched category '{Path}' in {Uri} line {LineNumber}.")]
+	private partial void LogMatchCategory(string path, string? uri, int lineNumber);
+
+	[LoggerMessage(LogLevel.Warning, "No match for input '{Message}'.")]
+	private partial void LogNoMatch(string message);
+
+	#endregion
 }

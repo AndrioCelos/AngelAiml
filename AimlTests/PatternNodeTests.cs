@@ -34,7 +34,7 @@ public class PatternNodeTests {
 		var template = new Template(TemplateElementCollection.Empty);
 		node.AddChild([new("TEST"), PathToken.ThatSeparator, new("*"), PathToken.TopicSeparator, new("*")], template);
 
-		var test = new AimlTest("test");
+		var test = new AimlTest() { SampleRequestSentenceText = "test" };
 		var foundTemplate = node.Search(test.RequestProcess.Sentence, test.RequestProcess, "unknown", false);
 		Assert.AreSame(template, foundTemplate);
 		Assert.AreEqual(0, test.RequestProcess.Star.Count);
@@ -51,7 +51,7 @@ public class PatternNodeTests {
 		node.AddChild([new("*"), PathToken.ThatSeparator, new("*"), PathToken.TopicSeparator, new("*")], template);
 		node.AddChild([new("^"), PathToken.ThatSeparator, new("*"), PathToken.TopicSeparator, new("*")], template2);
 
-		var test = new AimlTest("1 2 3");
+		var test = new AimlTest() { SampleRequestSentenceText = "1 2 3" };
 		Assert.AreSame(template2, node.Search(test.RequestProcess.Sentence, test.RequestProcess, "unknown", false));
 		Assert.AreEqual(1, test.RequestProcess.Star.Count);
 		Assert.AreEqual("1 2 3", test.RequestProcess.Star[0]);
@@ -66,7 +66,7 @@ public class PatternNodeTests {
 		node.AddChild([new("testset", true), new("*"), PathToken.ThatSeparator, new("*"), PathToken.TopicSeparator, new("*")], template);
 		node.AddChild([new("*"), PathToken.ThatSeparator, new("*"), PathToken.TopicSeparator, new("*")], template2);
 
-		var test = new AimlTest("test entry 1");
+		var test = new AimlTest() { SampleRequestSentenceText = "test entry 1" };
 		test.Bot.Sets.Add("testset", new StringSet(["test entry"], StringComparer.InvariantCultureIgnoreCase));
 		Assert.AreSame(template, node.Search(test.RequestProcess.Sentence, test.RequestProcess, "unknown", false));
 		Assert.AreEqual(2, test.RequestProcess.Star.Count);
@@ -80,7 +80,7 @@ public class PatternNodeTests {
 		var template = new Template(TemplateElementCollection.Empty);
 		node.AddChild([new("testset", true), new("*"), PathToken.ThatSeparator, new("*"), PathToken.TopicSeparator, new("*")], template);
 
-		var test = new AimlTest("foo bar baz");
+		var test = new AimlTest() { SampleRequestSentenceText = "foo bar baz" };
 		test.Bot.Sets.Add("testset", new StringSet(["foo", "foo bar"], StringComparer.InvariantCultureIgnoreCase));
 		Assert.AreSame(template, node.Search(test.RequestProcess.Sentence, test.RequestProcess, "unknown", false));
 		Assert.AreEqual(2, test.RequestProcess.Star.Count);
@@ -96,7 +96,7 @@ public class PatternNodeTests {
 		node.AddChild([new("TEST"), new("^"), PathToken.ThatSeparator, new("*"), PathToken.TopicSeparator, new("*")], template);
 		node.AddChild([new("TEST"), new("*"), PathToken.ThatSeparator, new("*"), PathToken.TopicSeparator, new("*")], template2);
 
-		var test = new AimlTest("TEST");
+		var test = new AimlTest() { SampleRequestSentenceText = "TEST" };
 		Assert.AreSame(template, node.Search(test.RequestProcess.Sentence, test.RequestProcess, "unknown", false));
 		Assert.AreEqual(1, test.RequestProcess.Star.Count);
 		Assert.AreEqual("nil", test.RequestProcess.Star[0]);
@@ -111,7 +111,7 @@ public class PatternNodeTests {
 		node.AddChild([new("#"), PathToken.ThatSeparator, new("*"), PathToken.TopicSeparator, new("*")], template);
 		node.AddChild([new("TEST"), PathToken.ThatSeparator, new("*"), PathToken.TopicSeparator, new("*")], template2);
 
-		var test = new AimlTest("test");
+		var test = new AimlTest() { SampleRequestSentenceText = "test" };
 		Assert.AreSame(template, node.Search(test.RequestProcess.Sentence, test.RequestProcess, "unknown", false));
 		Assert.AreEqual(1, test.RequestProcess.Star.Count);
 		Assert.AreEqual("test", test.RequestProcess.Star[0]);
@@ -127,14 +127,14 @@ public class PatternNodeTests {
 		node.AddChild([new("$WHO"), new("IS"), new("ANGELINA"), PathToken.ThatSeparator, new("*"), PathToken.TopicSeparator, new("*")], template2);
 		node.AddChild([new("HELLO"), new("ANGELINA"), PathToken.ThatSeparator, new("*"), PathToken.TopicSeparator, new("*")], template3);
 
-		var test = new AimlTest("Hello Angelina");  // Should match _ ANGELINA.
+		var test = new AimlTest() { SampleRequestSentenceText = "Hello Angelina" };  // Should match _ ANGELINA.
 		var foundTemplate = node.Search(test.RequestProcess.Sentence, test.RequestProcess, "unknown", false);
 		Assert.AreSame(template, foundTemplate);
 		Assert.AreEqual(1, test.RequestProcess.Star.Count);
 		Assert.AreEqual(1, test.RequestProcess.ThatStar.Count);
 		Assert.AreEqual(1, test.RequestProcess.TopicStar.Count);
 
-		test = new AimlTest("Who is Angelina");  // Should match $WHO IS ANGELINA.
+		test = new AimlTest() { SampleRequestSentenceText = "Who is Angelina" };  // Should match $WHO IS ANGELINA.
 		foundTemplate = node.Search(test.RequestProcess.Sentence, test.RequestProcess, "unknown", false);
 		Assert.AreSame(template2, foundTemplate);
 		Assert.AreEqual(0, test.RequestProcess.Star.Count);
@@ -148,7 +148,7 @@ public class PatternNodeTests {
 		var template = new Template(TemplateElementCollection.Empty);
 		node.AddChild([new("*"), new("*"), PathToken.ThatSeparator, new("*"), PathToken.TopicSeparator, new("*")], template);
 
-		var test = new AimlTest("1 2 3");
+		var test = new AimlTest() { SampleRequestSentenceText = "1 2 3" };
 		Assert.AreSame(template, node.Search(test.RequestProcess.Sentence, test.RequestProcess, "unknown", false));
 		Assert.AreEqual(2, test.RequestProcess.Star.Count);
 		Assert.AreEqual("1", test.RequestProcess.Star[0]);

@@ -2,6 +2,8 @@ using System.Reflection;
 using System.Xml;
 using System.Xml.Linq;
 using Aiml.Media;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aiml;
 public delegate TemplateNode TemplateTagParser(XElement element, AimlLoader loader);
@@ -9,8 +11,9 @@ public delegate string? OobReplacementHandler(XElement element, Response respons
 public delegate void OobHandler(XElement element, Response response);
 public delegate IMediaElement MediaElementParser(XElement element, Response response);
 
-public class AimlLoader(Bot bot) {
+public partial class AimlLoader(Bot bot) {
 	private readonly Bot bot = bot;
+	private readonly ILogger logger = bot.loggerFactory?.CreateLogger<AimlLoader>() ?? NullLogger<AimlLoader>.Instance;
 
 	internal static readonly Dictionary<string, TemplateTagParser> tags = new(StringComparer.InvariantCultureIgnoreCase) {
 		// Elements that the reflection method can't handle
@@ -121,18 +124,18 @@ public class AimlLoader(Bot bot) {
 	public void LoadAimlFiles(string path) {
 		if (!Directory.Exists(path)) throw new FileNotFoundException($"AIML directory not found: {path}", path);
 
-		bot.Log(LogLevel.Info, $"Loading AIML files from {path}");
+		LogLoadingDirectory(logger, path);
 		var files = Directory.GetFiles(path, "*.aiml", SearchOption.AllDirectories);
 
 		foreach (var file in files)
 			LoadAiml(file);
 
 		GC.Collect();
-		bot.Log(LogLevel.Info, $"Finished loading the AIML files. {bot.Size} {(bot.Size == 1 ? "category" : "categories")} in {files.Length} {(files.Length == 1 ? "file" : "files")} processed.");
+		LogFinishedLoading(logger, bot.Size, files.Length);
 	}
 
 	public void LoadAiml(string path) {
-		bot.Log(LogLevel.Info, $"Processing AIML file: {path}");
+		LogLoadingFile(logger, path);
 		var document = XDocument.Load(path, LoadOptions.SetBaseUri | LoadOptions.SetLineInfo | LoadOptions.PreserveWhitespace);
 		LoadAiml(document);
 	}
@@ -192,7 +195,11 @@ public class AimlLoader(Bot bot) {
 		if (existingTemplate is null)
 			bot.Size++;
 		else
-			bot.Log(LogLevel.Warning, $"Duplicate category: '{string.Join(" ", path)}'\nFirst defined in {existingTemplate.Uri} line {existingTemplate.LineNumber}\nDuplicated in {templateNode.BaseUri} line {((IXmlLineInfo) templateNode).LineNumber}");
+#if NET8_0_OR_GREATER
+			LogDuplicateCategory(logger, string.Join(' ', path), existingTemplate.Uri, existingTemplate.LineNumber, templateNode.BaseUri, ((IXmlLineInfo) templateNode).LineNumber);
+#else
+			LogDuplicateCategory(logger, string.Join(" ", path), existingTemplate.Uri, existingTemplate.LineNumber, templateNode.BaseUri, ((IXmlLineInfo) templateNode).LineNumber);
+#endif
 	}
 
 	public TemplateNode ParseElement(XElement el) {
@@ -255,4 +262,20 @@ public class AimlLoader(Bot bot) {
 			}
 		}
 	}
+
+	#region Log templates
+
+	[LoggerMessage(LogLevel.Information, "Loading AIML files from {Path}")]
+	private static partial void LogLoadingDirectory(ILogger logger, string path);
+
+	[LoggerMessage(LogLevel.Information, "Loading AIML file: {Path}")]
+	private static partial void LogLoadingFile(ILogger logger, string path);
+
+	[LoggerMessage(LogLevel.Information, "Finished loading the AIML files. {Size} categories in {FileCount} file(s) loaded.")]
+	private static partial void LogFinishedLoading(ILogger logger, int size, int fileCount);
+
+	[LoggerMessage(LogLevel.Warning, "Duplicate category: '{Path}', first defined in {FirstUri} line {FirstLine}, duplicated in {SecondUri} line {SecondLine}.")]
+	private static partial void LogDuplicateCategory(ILogger logger, string path, string? firstUri, int? firstLine, string? secondUri, int? secondLine);
+
+	#endregion
 }

@@ -1,11 +1,12 @@
-using System.Text.RegularExpressions;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Xml;
-using Aiml.Media;
 using System.Xml.Linq;
+using Aiml.Media;
+using Microsoft.Extensions.Logging;
 
 namespace Aiml;
-public class Response(Request request, string text) {
+public partial class Response(Request request, string text) {
 	public Request Request { get; } = request;
 	public Bot Bot => Request.Bot;
 	public User User => Request.User;
@@ -14,9 +15,9 @@ public class Response(Request request, string text) {
 
 	public bool IsEmpty => string.IsNullOrWhiteSpace(Text);
 
-	internal string ProcessOobElements() => Text = Regex.Replace(Text, @"<\s*oob\s*>.*?<(/?)\s*oob\s*>", m => {
+	internal string ProcessOobElements() => Text = OobElementRegex().Replace(Text, m => {
 		if (m.Groups[1].Value == "") {
-			Bot.Log(LogLevel.Warning, "Cannot process nested <oob> elements.");
+			LogNestedOobElements(Bot.GetLogger(typeof(Response)));
 			return m.Value;
 		}
 		var element = XElement.Parse(m.Value);
@@ -25,7 +26,7 @@ public class Response(Request request, string text) {
 			if (AimlLoader.oobHandlers.TryGetValue(childElement.Name.LocalName, out var handler))
 				builder.Append(handler(childElement, this));
 			else
-				Bot.Log(LogLevel.Warning, $"No handler found for <oob> element <{childElement.Name}>.");
+				LogUnknownOobElement(Bot.GetLogger(typeof(Response)), childElement.Name.LocalName);
 		}
 		return builder.ToString();
 	});
@@ -74,7 +75,7 @@ public class Response(Request request, string text) {
 								currentMessage.Value.inlineElements.Add(new MediaElement(element));
 							}
 						} catch (ArgumentException ex) {
-							Bot.Log(LogLevel.Warning, $"Invalid <{childElement.Name.LocalName}> media element in response: {ex.Message}");
+							LogInvalidMediaElement(Bot.GetLogger(typeof(Response)), ex, childElement.Name.LocalName);
 						}
 						break;
 				}
@@ -83,11 +84,35 @@ public class Response(Request request, string text) {
 				messages.Add(new([.. currentMessage.Value.inlineElements], [.. currentMessage.Value.blockElements], null));
 			return [.. messages];
 		} catch (XmlException ex) {
-			Bot.Log(LogLevel.Warning, $"Failed to parse response media elements: {ex.Message}");
+			LogFailedToParseMediaElements(Bot.GetLogger(typeof(Response)), ex);
 			return [new([new MediaText(Text)], [], null)];
 		}
 	}
 
 	/// <summary>Returns the response text, with rich media elements in raw XML. Messages are separated with newlines.</summary>
 	public override string ToString() => Text;
+
+#if NET8_0_OR_GREATER
+	[GeneratedRegex(@"<\s*oob\s*>.*?<(/?)\s*oob\s*>")]
+	private static partial Regex OobElementRegex();
+#else
+	private static readonly Regex oobElementRegex = new(@"<\s*oob\s*>.*?<(/?)\s*oob\s*>", RegexOptions.Compiled | RegexOptions.Singleline);
+	private static Regex OobElementRegex() => oobElementRegex;
+#endif
+
+	#region Log templates
+
+	[LoggerMessage(LogLevel.Warning, "Cannot process nested <oob> elements.")]
+	private static partial void LogNestedOobElements(ILogger logger);
+
+	[LoggerMessage(LogLevel.Warning, "No handler found for <oob> element <{ElementName}>.")]
+	private static partial void LogUnknownOobElement(ILogger logger, string elementName);
+
+	[LoggerMessage(LogLevel.Warning, "Invalid <{ElementName}> media element in response")]
+	private static partial void LogInvalidMediaElement(ILogger logger, Exception ex, string elementName);
+
+	[LoggerMessage(LogLevel.Warning, "Exception parsing response media elements")]
+	private static partial void LogFailedToParseMediaElements(ILogger logger, Exception ex);
+
+	#endregion
 }

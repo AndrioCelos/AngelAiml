@@ -15,7 +15,8 @@ The following directories are included in this repository:
 ```Csharp
 using Aiml;
 
-var bot = new Bot(botPath);
+var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+var bot = new Bot(botPath, loggerFactory);
 bot.LoadConfig();
 bot.LoadAIML();
 
@@ -28,3 +29,7 @@ while (true) {
 	Console.WriteLine($"{bot.Properties.GetValueOrDefault("name", "Robot")}: {response}");
 }
 ```
+
+## Logging
+
+This library uses the Microsoft.Extensions.Logging framework for logging. Logging can be configured by passing an `ILoggerFactory` to the `Bot` constructor. The `AimlConsoleBot` project demonstrates how to log to the console and to a file.

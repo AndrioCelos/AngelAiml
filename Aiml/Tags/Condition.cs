@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Text;
+using Microsoft.Extensions.Logging;
 
 namespace Aiml.Tags;
 /// <summary>Returns up to one of a choice of child elements depending on the results of matching a predicate against a pattern.</summary>
@@ -33,7 +34,7 @@ namespace Aiml.Tags;
 ///		<para>This element is defined by the AIML 1.1 specification.</para>
 /// </remarks>
 /// <seealso cref="Get"/><seealso cref="Random"/>
-public sealed class Condition : TemplateNode {
+public sealed partial class Condition : TemplateNode {
 	private readonly Li[] items;
 	public ReadOnlyCollection<Li> Items { get; }
 
@@ -74,35 +75,38 @@ public sealed class Condition : TemplateNode {
 					// '*' is a match if the predicate is bound at all.
 					if (item.LocalVar) {
 						if (process.Variables.ContainsKey(key)) {
-							process.Log(LogLevel.Diagnostic, $"In element <condition>: Local variable {key} matches *.");
+							LogLocalVariableStarMatch(GetLogger(process), key);
 							return item;
 						}
 					} else {
 						if (process.User.Predicates.ContainsKey(key)) {
-							process.Log(LogLevel.Diagnostic, $"In element <condition>: Predicate {key} matches *.");
+							LogPredicateStarMatch(GetLogger(process), key);
 							return item;
 						}
 					}
 				} else {
 					if (item.LocalVar) {
 						if (process.Bot.Config.StringComparer.Equals(process.GetVariable(key), checkValue)) {
-							process.Log(LogLevel.Diagnostic, $"In element <condition>: Local variable {key} matches {checkValue}.");
+							LogLocalVariableMatch(GetLogger(process), key, checkValue);
 							return item;
 						}
 					} else {
 						if (process.Bot.Config.StringComparer.Equals(checkValue, process.User.GetPredicate(key))) {
-							process.Log(LogLevel.Diagnostic, $"In element <condition>: {(item.LocalVar ? "Local variable" : "Predicate")} {key} matches {checkValue}.");
+							LogPredicateMatch(GetLogger(process), key, checkValue);
 							return item;
 						}
 					}
 				}
 				// No match; keep looking.
-				process.Log(LogLevel.Diagnostic, $"In element <condition>: {(item.LocalVar ? "Local variable" : "Predicate")} {key} does not match {checkValue}.");
+				if (item.LocalVar)
+					LogLocalVariableNoMatch(GetLogger(process), key, checkValue);
+				else
+					LogPredicateNoMatch(GetLogger(process), key, checkValue);
 			} else if (key == null && checkValue == null) {
 				// Default case.
 				return item;
 			} else {
-				process.Log(LogLevel.Warning, "In element <condition>: Missing 'name', 'var' or 'value' attribute in <li>.");
+				LogMissingAttribute(GetLogger(process, true));
 			}
 		}
 
@@ -116,7 +120,7 @@ public sealed class Condition : TemplateNode {
 		do {
 			++loops;
 			if (loops > process.Bot.Config.LoopLimit) {
-				process.Log(LogLevel.Warning, $"Loop limit exceeded. User: {process.User.ID}; path: \"{process.Path}\"");
+				LogLoopLimitExceeded(GetLogger(process, true), process.User.ID, process.Path);
 				throw new LoopLimitException();
 			}
 
@@ -143,4 +147,32 @@ public sealed class Condition : TemplateNode {
 
 		public override string Evaluate(RequestProcess process) => EvaluateChildren(process);
 	}
+
+	#region Log templates
+
+	[LoggerMessage(LogLevel.Trace, "In element <condition>: Local variable {Variable} matches *.")]
+	private static partial void LogLocalVariableStarMatch(ILogger logger, string variable);
+
+	[LoggerMessage(LogLevel.Trace, "In element <condition>: Predicate {Predicate} matches *.")]
+	private static partial void LogPredicateStarMatch(ILogger logger, string predicate);
+
+	[LoggerMessage(LogLevel.Trace, "In element <condition>: Local variable {Variable} matches {CheckValue}.")]
+	private static partial void LogLocalVariableMatch(ILogger logger, string variable, string checkValue);
+
+	[LoggerMessage(LogLevel.Trace, "In element <condition>: Predicate {Predicate} matches {CheckValue}.")]
+	private static partial void LogPredicateMatch(ILogger logger, string predicate, string checkValue);
+
+	[LoggerMessage(LogLevel.Trace, "In element <condition>: Local variable {Variable} does not match {CheckValue}.")]
+	private static partial void LogLocalVariableNoMatch(ILogger logger, string variable, string checkValue);
+
+	[LoggerMessage(LogLevel.Trace, "In element <condition>: Predicate {Predicate} does not match {CheckValue}.")]
+	private static partial void LogPredicateNoMatch(ILogger logger, string predicate, string checkValue);
+
+	[LoggerMessage(LogLevel.Warning, "In element <condition>: Missing 'name', 'var' or 'value' attribute in <li>.")]
+	private static partial void LogMissingAttribute(ILogger logger);
+
+	[LoggerMessage(LogLevel.Warning, "Loop limit exceeded. User: {User}; path: \"{Path}\"")]
+	private static partial void LogLoopLimitExceeded(ILogger logger, string user, string path);
+
+	#endregion
 }

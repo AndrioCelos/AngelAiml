@@ -2,14 +2,23 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aiml;
 /// <summary>Represents an AIML template-side node.</summary>
-public abstract class TemplateNode {
+public abstract partial class TemplateNode {
 	/// <summary>When overridden, returns the evaluated content of this node.</summary>
 	public abstract string Evaluate(RequestProcess process);
 
-	protected static bool TryParseIndex(string elementName, RequestProcess process, TemplateElementCollection? attr, out int index) {
+	/// <summary>Returns the <see cref="ILogger"/> instance for this type and the specified request.</summary>
+	protected ILogger GetLogger(RequestProcess process, bool ignoreRecusionLimit = false)
+		=> ignoreRecusionLimit || process.RecursionDepth < process.Bot.Config.LogRecursionLimit
+			? process.Bot.GetLogger(GetType())
+			: NullLogger.Instance;
+
+	/// <summary>Evaluates the specified child element collection and attempts to parse the result as an integer.</summary>
+	protected bool TryParseIndex(RequestProcess process, TemplateElementCollection? attr, out int index) {
 		if (attr is null) {
 			index = 1;
 			return true;
@@ -17,9 +26,16 @@ public abstract class TemplateNode {
 		var s = attr.Evaluate(process);
 		if (int.TryParse(s, out index) && index > 0)
 			return true;
-		process.Log(LogLevel.Warning, $"In element <{elementName}>: 'index' was not valid: {s}");
+		LogInvalidIndex(GetLogger(process, true), s);
 		return false;
 	}
+
+	#region Log templates
+
+	[LoggerMessage(LogLevel.Warning, "'index' was not valid: {Index}")]
+	private static partial void LogInvalidIndex(ILogger logger, string Index);
+
+	#endregion
 }
 
 /// <summary>Represents a template-side tag that can recursively contain other nodes.</summary>
@@ -35,9 +51,7 @@ public abstract class RecursiveTemplateTag(TemplateElementCollection children) :
 }
 
 /// <summary>Represents constant text in place of a template-side AIML tag.</summary>
-public sealed class TemplateText : TemplateNode {
-	private static readonly Regex whitespaceRegex = new(@"\s+", RegexOptions.Compiled);
-
+public sealed partial class TemplateText : TemplateNode {
 	internal static TemplateText Space { get; } = new(" ");
 
 	public string Text { get; private set; }
@@ -48,7 +62,7 @@ public sealed class TemplateText : TemplateNode {
 	/// <param name="reduceWhitespace">If set, consecutive whitespace will be reduced to a single space, as per HTML.</param>
 	public TemplateText(string text, bool reduceWhitespace) {
 		// Pandorabots reduces consecutive whitespace in text nodes to a single space character (like HTML).
-		if (reduceWhitespace) text = whitespaceRegex.Replace(text, " ");
+		if (reduceWhitespace) text = WhitespaceRegex().Replace(text, " ");
 		Text = text;
 	}
 
@@ -56,6 +70,14 @@ public sealed class TemplateText : TemplateNode {
 	public override string Evaluate(RequestProcess process) => Text;
 
 	public override string ToString() => Text;
+
+#if NET8_0_OR_GREATER
+	[GeneratedRegex(@"\s+")]
+	private static partial Regex WhitespaceRegex();
+#else
+	private static readonly Regex whitespaceRegex = new(@"\s+", RegexOptions.Compiled);
+	public static Regex WhitespaceRegex() => whitespaceRegex;
+#endif
 }
 
 /// <summary>Represents a collection of <see cref="TemplateNode"/> instances, as contained by a <see cref="RecursiveTemplateTag"/> or attribute subtag.</summary>

@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 
 namespace Aiml.Tags;
 /// <summary>Returns the current time.</summary>
@@ -38,7 +39,7 @@ namespace Aiml.Tags;
 ///		<para>This element is defined by the AIML 1.1 specification and extended by the AIML 2.0 specification. The <c>nformat</c> attribute is an extension.</para>
 /// </remarks>
 /// <seealso cref="Interval"/>
-public sealed class Date : TemplateNode {
+public sealed partial class Date : TemplateNode {
 	public TemplateElementCollection? Format { get; set; }
 	public TemplateElementCollection? JFormat { get; set; }
 	public TemplateElementCollection? NFormat { get; set; }
@@ -71,7 +72,7 @@ public sealed class Date : TemplateNode {
 			try {
 				locale = CultureInfo.GetCultureInfo(localeString.Replace('_', '-'));
 			} catch (CultureNotFoundException) {
-				process.Log(LogLevel.Warning, $"In element <date>: Locale '{localeString}' is unknown.");
+				LogLocaleUnknown(GetLogger(process, true), localeString);
 				locale = process.Bot.Config.Locale;
 			}
 		}
@@ -86,9 +87,8 @@ public sealed class Date : TemplateNode {
 			: dateTimeOffset.Date.ToString(locale);
 	}
 
-	private static readonly Regex offsetRegex = new(@"^\s*(?:([-+])\s*)?(\d+)\s*(?::\s*(\d+)\s*)?$", RegexOptions.Compiled);
 	private static bool TryParseOffset(string offsetStr, out TimeSpan offset) {
-		var match = offsetRegex.Match(offsetStr);
+		var match = ParseOffsetRegex().Match(offsetStr);
 		if (!match.Success) {
 			offset = default;
 			return false;
@@ -284,4 +284,19 @@ public sealed class Date : TemplateNode {
 	}
 
 	private static string GetOffsetString(TimeSpan offset, string format) => $"{(offset < TimeSpan.Zero ? '-' : '+')}{offset.ToString(format)}";
+
+#if NET8_0_OR_GREATER
+	[GeneratedRegex(@"^\s*(?:([-+])\s*)?(\d+)\s*(?::\s*(\d+)\s*)?$", RegexOptions.Compiled)]
+	private static partial Regex ParseOffsetRegex();
+#else
+	private static readonly Regex parseOffsetRegex = new(@"^\s*(?:([-+])\s*)?(\d+)\s*(?::\s*(\d+)\s*)?$", RegexOptions.Compiled);
+	private static Regex ParseOffsetRegex() => parseOffsetRegex;
+#endif
+
+	#region Log templates
+
+	[LoggerMessage(LogLevel.Warning, "In element <date>: Locale '{Locale}' is unknown.")]
+	private static partial void LogLocaleUnknown(ILogger logger, string locale);
+
+	#endregion
 }

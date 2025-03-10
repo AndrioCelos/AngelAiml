@@ -61,8 +61,6 @@ public class Config {
 	/// <summary>Returns the <see cref="StringComparer"/> used for test comparisons. This is changed by setting the <see cref="Locale"/> property.</summary>
 	public StringComparer CaseSensitiveStringComparer { get; private set; } = StringComparer.CurrentCulture;
 
-	/// <summary>The minimum level of messages that should be logged.</summary>
-	public LogLevel LogLevel = LogLevel.Info;
 	/// <summary>The maximum allowed number of recursive <c>srai</c> template elements that will have diagnostic messages logged.</summary>
 	public int LogRecursionLimit = 2;
 

@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using System.Text;
+using Microsoft.Extensions.Logging;
 
 namespace Aiml.Tags;
 /// <summary>Returns the amount of time between two dates.</summary>
@@ -32,7 +33,7 @@ namespace Aiml.Tags;
 ///		<para>This element is defined by the AIML 2.0 specification.</para>
 /// </remarks>
 /// <seealso cref="Date"/>
-public sealed class Interval(TemplateElementCollection? jformat, TemplateElementCollection start, TemplateElementCollection end, TemplateElementCollection style) : TemplateNode {
+public sealed partial class Interval(TemplateElementCollection? jformat, TemplateElementCollection start, TemplateElementCollection end, TemplateElementCollection style) : TemplateNode {
 	public TemplateElementCollection? JFormat { get; set; } = jformat;
 	public TemplateElementCollection Start { get; set; } = start;
 	public TemplateElementCollection End { get; set; } = end;
@@ -74,7 +75,7 @@ public sealed class Interval(TemplateElementCollection? jformat, TemplateElement
 				return interval.ToString();
 			}
 			default:
-				process.Log(LogLevel.Warning, $"In element <interval>: 'style' attribute was invalid: {unit}");
+				LogInvalidStyle(GetLogger(process, true), unit);
 				return "unknown";
 		}
 	}
@@ -86,7 +87,7 @@ public sealed class Interval(TemplateElementCollection? jformat, TemplateElement
 			|| (end.Month == start.Month && (end.Day < start.Day
 				|| (end.Day == start.Day && (end.Ticks % TimeSpan.TicksPerDay) < (start.Ticks % TimeSpan.TicksPerDay))));
 
-	private static bool TryParseDate(RequestProcess process, string s, string? jformat, out DateTimeOffset dateTimeOffset) {
+	private bool TryParseDate(RequestProcess process, string s, string? jformat, out DateTimeOffset dateTimeOffset) {
 		try {
 			if (jformat is not null) {
 				var format = ConvertJavaFormat(jformat);
@@ -96,9 +97,9 @@ public sealed class Interval(TemplateElementCollection? jformat, TemplateElement
 			return true;
 		} catch (FormatException) {
 			if (jformat is not null)
-				process.Log(LogLevel.Warning, $"In element <interval>: Could not parse '{s}' as a date with format '{jformat}'.");
+				LogInvalidDateWithFormat(GetLogger(process, true), s, jformat);
 			else
-				process.Log(LogLevel.Warning, $"In element <interval>: Could not parse '{s}' as a date.");
+				LogInvalidDate(GetLogger(process, true), s);
 			dateTimeOffset = default;
 			return false;
 		}
@@ -146,4 +147,17 @@ public sealed class Interval(TemplateElementCollection? jformat, TemplateElement
 
 		return builder.ToString();
 	}
+
+	#region Log templates
+
+	[LoggerMessage(LogLevel.Warning, "In element <interval>: 'style' attribute was invalid: {Style}")]
+	private static partial void LogInvalidStyle(ILogger logger, string style);
+
+	[LoggerMessage(LogLevel.Warning, "In element <interval>: Could not parse '{Date}' as a date with format '{Format}'.")]
+	private static partial void LogInvalidDateWithFormat(ILogger logger, string date, string format);
+
+	[LoggerMessage(LogLevel.Warning, "In element <interval>: Could not parse '{Date}' as a date.")]
+	private static partial void LogInvalidDate(ILogger logger, string date);
+
+	#endregion
 }

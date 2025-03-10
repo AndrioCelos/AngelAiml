@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+
 namespace Aiml.Tags;
 /// <summary>Sets the value of a predicate or a local variable to the content, and returns the content.</summary>
 /// <remarks>
@@ -15,7 +17,7 @@ namespace Aiml.Tags;
 ///		<para>This element is defined by the AIML 1.1 specification. Local variables are defined by the AIML 2.0 specification.</para>
 /// </remarks>
 /// <seealso cref="AddTriple"/><seealso cref="Get"/>
-public sealed class Set(TemplateElementCollection key, bool local, TemplateElementCollection children) : RecursiveTemplateTag(children) {
+public sealed partial class Set(TemplateElementCollection key, bool local, TemplateElementCollection children) : RecursiveTemplateTag(children) {
 	public TemplateElementCollection Key { get; private set; } = key;
 	public bool LocalVar { get; private set; } = local;
 
@@ -34,12 +36,34 @@ public sealed class Set(TemplateElementCollection key, bool local, TemplateEleme
 		if (process.Bot.Config.UnbindPredicatesWithDefaultValue &&
 			value == (LocalVar ? process.Bot.Config.DefaultPredicate : process.Bot.Config.GetDefaultPredicate(key))) {
 			dictionary.Remove(key);
-			process.Log(LogLevel.Diagnostic, $"In element <set>: Unbound {(LocalVar ? "local variable" : "predicate")} '{key}' with default value '{value}'.");
+			if (LocalVar)
+				LogUnboundLocalVariable(GetLogger(process), key, value);
+			else
+				LogUnboundPredicate(GetLogger(process), key, value);
 		} else {
 			dictionary[key] = value;
-			process.Log(LogLevel.Diagnostic, $"In element <set>: Set {(LocalVar ? "local variable" : "predicate")} '{key}' to '{value}'.");
+			if (LocalVar)
+				LogBoundLocalVariable(GetLogger(process), key, value);
+			else
+				LogBoundPredicate(GetLogger(process), key, value);
 		}
 
 		return value;
 	}
+
+	#region Log templates
+
+	[LoggerMessage(LogLevel.Trace, "In element <set>: Unbound local variable '{Variable}' with default value '{Value}'.")]
+	private static partial void LogUnboundLocalVariable(ILogger logger, string variable, string value);
+
+	[LoggerMessage(LogLevel.Trace, "In element <set>: Unbound predicate '{Predicate}' with default value '{Value}'.")]
+	private static partial void LogUnboundPredicate(ILogger logger, string predicate, string value);
+
+	[LoggerMessage(LogLevel.Trace, "In element <set>: Set local variable '{Variable}' to '{Value}'.")]
+	private static partial void LogBoundLocalVariable(ILogger logger, string variable, string value);
+
+	[LoggerMessage(LogLevel.Trace, "In element <set>: Set predicate '{Predicate}' to '{Value}'.")]
+	private static partial void LogBoundPredicate(ILogger logger, string predicate, string value);
+
+	#endregion
 }

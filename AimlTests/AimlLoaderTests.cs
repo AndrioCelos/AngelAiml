@@ -109,7 +109,7 @@ public class AimlLoaderTests {
 
 	[Test]
 	public void LoadAimlFiles_DefaultDirectory() {
-		var test = new AimlTest(new Bot(GetExampleBotDir()));
+		var test = new AimlTest(GetExampleBotDir());
 		test.Bot.LoadConfig();
 		test.Bot.AimlLoader.LoadAimlFiles();
 		var template = AimlTest.GetTemplate(test.Bot.Graphmaster, "HI", "<that>", "*", "<topic>", "*");
@@ -287,9 +287,7 @@ public class AimlLoaderTests {
 	}
 
 	[Test]
-	public void ParseElement_InvalidContent() {
-		Assert.Throws<AimlException>(() => new AimlTest().Bot.AimlLoader.ParseElement(XElement.Parse("<star>foo</star>")));
-	}
+	public void ParseElement_InvalidContent() => Assert.Throws<AimlException>(() => new AimlTest().Bot.AimlLoader.ParseElement(XElement.Parse("<star>foo</star>")));
 
 	[Test]
 	public void ParseElement_SpecialParserOrCustomTag() {
@@ -319,9 +317,7 @@ public class AimlLoaderTests {
 	}
 
 	[Test]
-	public void ParseElement_InvalidAttribute() {
-		Assert.Throws<AimlException>(() => new AimlTest().Bot.AimlLoader.ParseElement(XElement.Parse("<star foo='bar'/>")));
-	}
+	public void ParseElement_InvalidAttribute() => Assert.Throws<AimlException>(() => new AimlTest().Bot.AimlLoader.ParseElement(XElement.Parse("<star foo='bar'/>")));
 
 	[Test]
 	public void ParseElement_DuplicateAttribute() {
@@ -330,9 +326,7 @@ public class AimlLoaderTests {
 	}
 
 	[Test]
-	public void ParseElement_MissingAttribute() {
-		Assert.Throws<AimlException>(() => new AimlTest().Bot.AimlLoader.ParseElement(XElement.Parse("<map>foo</map>")));
-	}
+	public void ParseElement_MissingAttribute() => Assert.Throws<AimlException>(() => new AimlTest().Bot.AimlLoader.ParseElement(XElement.Parse("<map>foo</map>")));
 
 	[Test]
 	public void ParseElement_SpecialContent() {

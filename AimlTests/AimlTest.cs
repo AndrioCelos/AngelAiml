@@ -1,27 +1,37 @@
-﻿namespace Aiml.Tests;
+﻿using System.Diagnostics.CodeAnalysis;
+using Microsoft.Extensions.Logging;
+
+namespace Aiml.Tests;
 /// <summary>Creates a mock setup for AIML tests.</summary>
 internal class AimlTest {
 	public Bot Bot { get; }
 	public User User { get; }
-	public RequestProcess RequestProcess { get; }
+	public RequestProcess RequestProcess { get; private init; }
 
-	private bool expectingWarning;
+	public string SampleRequestSentenceText { [MemberNotNull(nameof(RequestProcess))] init => RequestProcess = new(new(new(value, User, Bot), value), 0, false); }
+
+	internal bool expectingWarning;
+
+	internal ILoggerFactory GetLoggerFactory() => LoggerFactory.Create(builder => builder.AddConsole().AddProvider(new FailOnWarningLoggerProvider(this)));
 
 	/// <summary>Initialises a new <see cref="AimlTest"/> with a new bot with the default settings.</summary>
-	public AimlTest() : this(new Bot()) { }
-	/// <summary>Initialises a new <see cref="AimlTest"/> from the specified <see cref="Bot"/>.</summary>
-	public AimlTest(Bot bot) {
-		Bot = bot;
+	public AimlTest() {
+		Bot = new(GetLoggerFactory());
 		User = new("tester", Bot);
-		RequestProcess = new(new(new("TEST", User, Bot), "TEST"), 0, false);
-
-		Bot.LogMessage += Bot_LogMessage;
+		SampleRequestSentenceText = "TEST";
+	}
+	/// <summary>Initialises a new <see cref="AimlTest"/> from the specified <see cref="Bot"/>.</summary>
+	public AimlTest(string botPath) {
+		Bot = new(botPath, GetLoggerFactory());
+		User = new("tester", Bot);
+		SampleRequestSentenceText = "TEST";
 	}
 	/// <summary>Initialises a new <see cref="AimlTest"/> using the specified <see cref="Random"/>.</summary>
-	public AimlTest(Random random) : this(new Bot(random)) { }
-	/// <summary>Initialises a new <see cref="AimlTest"/> using the specified sample request.</summary>
-	public AimlTest(string sampleRequestSentenceText) : this()
-		=> RequestProcess = new(new(new(sampleRequestSentenceText, User, Bot), sampleRequestSentenceText), 0, false);
+	public AimlTest(Random random) {
+		Bot = new(random, GetLoggerFactory());
+		User = new("tester", Bot);
+		SampleRequestSentenceText = "TEST";
+	}
 
 	/// <summary>Asserts that the specified method causes a warning message to be logged.</summary>
 	public void AssertWarning(Action action) {
@@ -38,15 +48,6 @@ internal class AimlTest {
 		if (expectingWarning)
 			Assert.Fail("Expected warning was not raised.");
 		return result;
-	}
-
-	private void Bot_LogMessage(object? sender, LogMessageEventArgs e) {
-		if (e.Level == LogLevel.Warning) {
-			if (expectingWarning)
-				expectingWarning = false;
-			else
-				Assert.Fail($"AIML request raised a warning: {e.Message}");
-		}
 	}
 
 	internal static Template GetTemplate(PatternNode root, params string[] pathTokens) {

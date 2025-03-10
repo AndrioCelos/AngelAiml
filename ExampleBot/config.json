@@ -12,7 +12,6 @@
 	"TimeoutMessage": "That query took too long for me to process.",
 	"RecursionLimit": 50,
 	"RecursionLimitMessage": "Too much recursion in AIML.",
-	"LogLevel": "Chat",
 	"LogRecursionLimit": 2,
 	"AimlDirectory": "aiml",
 	"LogDirectory": "logs",

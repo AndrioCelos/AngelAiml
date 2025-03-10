@@ -1,7 +1,8 @@
 ﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
+using Microsoft.Extensions.Logging;
 
-namespace Aiml; 
+namespace Aiml;
 /// <summary>Contains data that is used during request processing, but is not stored after the request completes.</summary>
 public class RequestProcess {
 	public RequestSentence Sentence { get; }
@@ -65,12 +66,6 @@ public class RequestProcess {
 
 	/// <summary>Returns the value of the specified local variable for this request, or <see cref="Config.DefaultPredicate"/> if it is not bound.</summary>
 	public string GetVariable(string name) => Variables.TryGetValue(name, out var value) ? value : Bot.Config.DefaultPredicate;
-
-	/// <summary>Writes a message to the bot's loggers.</summary>
-	public void Log(LogLevel level, string message) {
-		if (level > LogLevel.Diagnostic || RecursionDepth < Bot.Config.LogRecursionLimit)
-			Bot.Log(level, $"[{RecursionDepth}] {message}");
-	}
 
 	/// <summary>Processes the specified text as a sub-request of the current request and returns the response.</summary>
 	public string Srai(string request) {

@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Logging;
+
 namespace Aiml.Tags;
 /// <summary>Recurses the text matched by the first message wildcard into a new request and returns the result.</summary>
 /// <remarks>
@@ -6,13 +8,23 @@ namespace Aiml.Tags;
 ///		<para>This element is defined by the AIML 1.1 specification.</para>
 /// </remarks>
 /// <seealso cref="Srai"/>
-public sealed class SR : TemplateNode {
+public sealed partial class SR : TemplateNode {
 	public override string Evaluate(RequestProcess process) {
 		var text = process.star.Count > 0 ? process.star[0] : process.Bot.Config.DefaultWildcard;
-		process.Log(LogLevel.Diagnostic, $"In element <sr>: processing text '{text}'.");
+		LogRequest(GetLogger(process), text);
 		var newRequest = new Aiml.Request(text, process.User, process.Bot);
 		text = process.Bot.ProcessRequest(newRequest, false, false, process.RecursionDepth + 1, out _).ToString();
-		process.Log(LogLevel.Diagnostic, $"In element <sr>: the request returned '{text}'.");
+		LogResponse(GetLogger(process), text);
 		return text;
 	}
+
+	#region Log templates
+
+	[LoggerMessage(LogLevel.Debug, "In element <sr>: processing text '{Request}'.")]
+	private static partial void LogRequest(ILogger logger, string request);
+
+	[LoggerMessage(LogLevel.Debug, "In element <sr>: the request returned '{Response}'.")]
+	private static partial void LogResponse(ILogger logger, string response);
+
+	#endregion
 }

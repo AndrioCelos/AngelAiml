@@ -1,4 +1,6 @@
-﻿namespace Aiml.Tags;
+﻿using Microsoft.Extensions.Logging;
+
+namespace Aiml.Tags;
 /// <summary>Deletes triples from the bot's triple database.</summary>
 /// <remarks>
 ///		<para>This element has the following attributes:</para>
@@ -15,7 +17,7 @@
 ///		<para>This element is part of an extension to AIML derived from Program AB and Program Y.</para>
 /// </remarks>
 /// <seealso cref="AddTriple"/><seealso cref="Select"/><seealso cref="Uniq"/>
-public sealed class DeleteTriple : TemplateNode {
+public sealed partial class DeleteTriple : TemplateNode {
 	public TemplateElementCollection Subject { get; }
 	public TemplateElementCollection? Predicate { get; }
 	public TemplateElementCollection? Object { get; }
@@ -34,18 +36,34 @@ public sealed class DeleteTriple : TemplateNode {
 		var obj = Object?.Evaluate(process).Trim();
 
 		if (string.IsNullOrEmpty(subj)) {
-			process.Log(LogLevel.Warning, "In element <deletetriple>: Subject was empty.");
+			LogEmptySubject(GetLogger(process, true));
 			return "";
 		}
 
 		if (string.IsNullOrEmpty(pred) || string.IsNullOrEmpty(obj)) {
 			var count = string.IsNullOrEmpty(pred) ? process.Bot.Triples.RemoveAll(subj) : process.Bot.Triples.RemoveAll(subj, pred!);
-			process.Log(LogLevel.Diagnostic, $"In element <deletetriple>: Deleted {count} {(count == 1 ? "triple" : "triples")}. {{ Subject = {subj}, Predicate = {pred}, Object = {obj} }}");
+			LogDeletedTriples(GetLogger(process), count, subj, pred, obj);
 		} else if (process.Bot.Triples.Remove(subj, pred!, obj!))
-			process.Log(LogLevel.Diagnostic, $"In element <deletetriple>: Deleted a triple. {{ Subject = {subj}, Predicate = {pred}, Object = {obj} }}");
+			LogDeletedTriple(GetLogger(process), subj, pred, obj);
 		else
-			process.Log(LogLevel.Diagnostic, $"In element <deletetriple>: No such triple exists. {{ Subject = {subj}, Predicate = {pred}, Object = {obj} }}");
+			LogTripleNotFound(GetLogger(process), subj, pred, obj);
 
 		return "";
 	}
+
+	#region Log templates
+
+	[LoggerMessage(LogLevel.Warning, "In element <deletetriple>: Subject was empty.")]
+	private static partial void LogEmptySubject(ILogger logger);
+
+	[LoggerMessage(LogLevel.Debug, "In element <deletetriple>: Deleted {Count} triple(s) {{ Subject = {Subject}, Predicate = {Predicate}, Object = {Object} }}")]
+	private static partial void LogDeletedTriples(ILogger logger, int count, string subject, string? predicate, string? @object);
+
+	[LoggerMessage(LogLevel.Debug, "In element <deletetriple>: Deleted a triple. {{ Subject = {Subject}, Predicate = {Predicate}, Object = {Object} }}")]
+	private static partial void LogDeletedTriple(ILogger logger, string subject, string? predicate, string? @object);
+
+	[LoggerMessage(LogLevel.Debug, "In element <deletetriple>: No such triple exists. {{ Subject = {Subject}, Predicate = {Predicate}, Object = {Object} }}")]
+	private static partial void LogTripleNotFound(ILogger logger, string subject, string? predicate, string? @object);
+
+	#endregion
 }

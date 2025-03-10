@@ -1,10 +1,11 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.Extensions.Logging;
 
 namespace Aiml;
 /// <summary>Represents a node in the AIML category tree.</summary>
-public class PatternNode {
+public partial class PatternNode {
 	internal readonly Dictionary<string, PatternNode> children;
 	/// <summary>Returns a dictionary mapping words and wildcards to the corresponding child nodes.</summary>
 	public IReadOnlyDictionary<string, PatternNode> Children { get; }
@@ -82,7 +83,7 @@ public class PatternNode {
 
 	public Template? Search(RequestSentence sentence, RequestProcess process, string that, bool traceSearch) {
 		if (process.RecursionDepth > sentence.Bot.Config.RecursionLimit) {
-			sentence.Bot.Log(LogLevel.Warning, $"Recursion limit exceeded. User: {sentence.Request.User.ID}; raw input: \"{sentence.Request.Text}\"");
+			LogRecursionLimitExceeded(process.Bot.GetLogger(typeof(PatternNode)), sentence.Request.User.ID, sentence.Request.Text);
 			throw new RecursionLimitException();
 		}
 
@@ -102,9 +103,9 @@ public class PatternNode {
 		topicSplit.CopyTo(inputPath, i);
 		if (traceSearch)
 #if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_0_OR_GREATER
-			process.Log(LogLevel.Diagnostic, $"Normalized path: {string.Join(' ', inputPath)}");
+			LogNormalizedPath(process.Bot.GetLogger(typeof(PatternNode)), string.Join(' ', inputPath));
 #else
-			process.Log(LogLevel.Diagnostic, $"Normalized path: {string.Join(" ", inputPath)}");
+			LogNormalizedPath(process.Bot.GetLogger(typeof(PatternNode)), string.Join(" ", inputPath));
 #endif
 
 		var result = Search(sentence, process, inputPath, 0, traceSearch, MatchState.Message);
@@ -112,12 +113,12 @@ public class PatternNode {
 	}
 	private Template? Search(RequestSentence sentence, RequestProcess process, string[] inputPath, int inputPathIndex, bool traceSearch, MatchState matchState) {
 		if (traceSearch)
-			sentence.Bot.Log(LogLevel.Diagnostic, $"Search: {process.Path}");
+			LogSearch(process.Bot.GetLogger(typeof(PatternNode)), process.Path);
 
 		var pathDepth = process.patternPathTokens.Count;
 
 		if (process.CheckTimeout()) {
-			sentence.Bot.Log(LogLevel.Warning, $"Request timeout. User: {sentence.Request.User.ID}; raw input: \"{sentence.Request.Text}\"");
+			LogRequestTimeout(process.Bot.GetLogger(typeof(PatternNode)), sentence.Request.User.ID, sentence.Request.Text);
 			throw new TimeoutException();
 		}
 
@@ -177,7 +178,11 @@ public class PatternNode {
 			foreach (var child in setChildren) {
 				process.patternPathTokens[pathDepth] = $"<set>{child.SetName}</set>";
 				if (!sentence.Bot.Sets.TryGetValue(child.SetName, out var set)) {
-					sentence.Request.Bot.Log(LogLevel.Warning, $"Reference to a missing set in pattern path '{string.Join(" ", process.patternPathTokens)}'.");
+#if NETSTANDARD2_1_OR_GREATER || NETCOREAPP2_0_OR_GREATER
+					LogMissingSet(process.Bot.GetLogger(typeof(PatternNode)), string.Join(' ', process.patternPathTokens));
+#else
+					LogMissingSet(process.Bot.GetLogger(typeof(PatternNode)), string.Join(" ", process.patternPathTokens));
+#endif
 					continue;
 				}
 				var star = process.GetStarList(matchState);
@@ -292,4 +297,23 @@ public class PatternNode {
 		public string SetName { get; } = setName;
 		public PatternNode Node { get; } = node;
 	}
+
+	#region Log templates
+
+	[LoggerMessage(LogLevel.Warning, "Recursion limit exceeded. User: {UserId}; raw input: \"{Input}\"")]
+	private static partial void LogRecursionLimitExceeded(ILogger logger, string userId, string input);
+
+	[LoggerMessage(LogLevel.Trace, "Normalized path: {Path}")]
+	private static partial void LogNormalizedPath(ILogger logger, string path);
+
+	[LoggerMessage(LogLevel.Trace, "Search: {Path}")]
+	private static partial void LogSearch(ILogger logger, string path);
+
+	[LoggerMessage(LogLevel.Warning, "Request timeout. User: {UserId}; raw input: \"{Input}\"")]
+	private static partial void LogRequestTimeout(ILogger logger, string userId, string input);
+
+	[LoggerMessage(LogLevel.Warning, "Reference to a missing set in pattern path '{Path}'.")]
+	private static partial void LogMissingSet(ILogger logger, string path);
+
+	#endregion
 }
