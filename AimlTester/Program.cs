@@ -1,68 +1,53 @@
-﻿using Aiml;
-using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.CommandLine;
+using System.CommandLine.Parsing;
 using System.IO;
+using System.Linq;
+using Aiml;
+using Microsoft.Extensions.Logging;
 
 namespace AimlTester;
-internal class Program {
+internal partial class Program {
+	private static readonly Argument<string> botPathArgument = new("botPath", "Path to the bot directory.");
+	private static readonly Option<string> testPathOption = new(["-t", "--tests"], "Specify the path, relative to the bot directory, to look for AIML tests.") { ArgumentHelpName = "path", IsRequired = true };
+	private static readonly Option<ICollection<string>> extensionOption = new(["-e", "--extension"], "Load AIML extensions from the specified assembly.") { ArgumentHelpName = "path" };
+	private static readonly Option<LogLevel> verbosityOption = new(["-v", "--verbosity"], ParseVerbosity, true, "Set the logging verbosity level.") { Arity = ArgumentArity.ZeroOrOne };
+
 	internal static int warnings;
+	internal static int exitCode;
+	private static ILogger? logger;
+
+	private static LogLevel ParseVerbosity(ArgumentResult result) {
+		return result.Parent is null or OptionResult { IsImplicit: true } ? LogLevel.Information
+			: !result.Tokens.Any() ? LogLevel.Trace
+			: result.Tokens.Single().Value.ToLowerInvariant() switch {
+				"q" or "quiet" or "s" or "silent" => LogLevel.None,
+				"m" or "minimal" or "w" or "warning" => LogLevel.Warning,
+				"n" or "normal" or "i" or "info" or "information" => LogLevel.Information,
+				"d" or "detailed" or "debug" => LogLevel.Debug,
+				"diag" or "diagnostic" or "t" or "trace" => LogLevel.Trace,
+				_ => throw new ArgumentException("Unknown verbosity")
+			};
+	}
 
 	internal static int Main(string[] args) {
-		var switches = true; string? botPath = null; string? testPath = null;
-		var extensionPaths = new List<string>();
-		var inputs = new List<string>();
+		var rootCommand = new RootCommand("Runs AIML tests for an AIML bot. Returns exit code 1 if any tests failed.") {
+			botPathArgument, testPathOption, extensionOption, verbosityOption
+		};
+		rootCommand.SetHandler(Run, botPathArgument, testPathOption, extensionOption, verbosityOption);
+		rootCommand.Invoke(args);
+		return exitCode;
+	}
 
-		for (var i = 0; i < args.Length; ++i) {
-			var s = args[i];
-			if (switches && s.StartsWith('-')) {
-				switch (s) {
-					case "--":
-						switches = false;
-						break;
-					case "-h":
-					case "--help":
-					case "-?":
-					case "/?":
-						Console.WriteLine($"Usage: {nameof(AimlTester)} [switches] -t <test subpath> <bot path>");
-						Console.WriteLine("Available switches:");
-						Console.WriteLine("  -e [path], --extension [path]: Load AIML extensions from the specified assembly.");
-						Console.WriteLine("  --: Stop processing switches.");
-						return 0;
-					case "-t":
-					case "--test":
-						testPath = args[++i];
-						break;
-					case "-e":
-					case "--extension":
-					case "--extensions":
-					case "-S":
-					case "--service":
-					case "--services":
-						extensionPaths.Add(args[++i]);
-						break;
-					default:
-						Console.Error.WriteLine($"Unknown switch {s}");
-						Console.Error.WriteLine($"Use `{nameof(AimlTester)} --help` for more information.");
-						return 1;
-				}
-			} else {
-				switches = false;
-				botPath = s;
-			}
-		}
-		if (botPath == null || testPath == null) {
-			Console.Error.WriteLine($"Usage: {nameof(AimlTester)} [switches] -t <test subpath> <bot path>");
-			Console.Error.WriteLine($"Use `{nameof(AimlTester)} --help` for more information.");
-			return 1;
-		}
-
+	private static void Run(string botPath, string testPath, ICollection<string> extensionPaths, LogLevel logLevel) {
 		foreach (var path in extensionPaths) {
-			Console.WriteLine($"Loading extensions from {path}...");
+			LogLoadingExtensions(logger!, path);
 			AimlLoader.AddExtensions(path);
 		}
 
-		var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().AddProvider(CountWarningsLoggerProvider.Instance));
+		var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().AddProvider(CountWarningsLoggerProvider.Instance).SetMinimumLevel(logLevel));
+		logger = loggerFactory.CreateLogger(nameof(AimlTester));
 		var bot = new Bot(botPath);
 		bot.LoadConfig();
 		bot.LoadAiml();
@@ -88,7 +73,7 @@ internal class Program {
 			Console.WriteLine($"{tests.Count} tests found.");
 
 		foreach (var (path, template) in categories) {
-			Console.WriteLine($"Running test template in {template.Uri} line {template.LineNumber} with path '{path}'...");
+			LogRunningTest(logger, template.Uri, template.LineNumber, path);
 
 			var pos = path.IndexOf(" <that> ");
 			var input = path[..pos];
@@ -157,6 +142,16 @@ internal class Program {
 		else Console.Write(" warnings.");
 		Console.WriteLine();
 
-		return 0;
+		if (failures > 0) exitCode = 1;
 	}
+
+	#region Log templates
+
+	[LoggerMessage(LogLevel.Information, "Loading extensions from {Path}.")]
+	private static partial void LogLoadingExtensions(ILogger logger, string path);
+
+	[LoggerMessage(LogLevel.Information, "Running test template in {Uri} line {LineNumber} with path '{Path}'.")]
+	private static partial void LogRunningTest(ILogger logger, string? uri, int lineNumber, string path);
+
+	#endregion
 }

@@ -3,62 +3,47 @@ using Aiml.Media;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.CommandLine;
+using System.CommandLine.Parsing;
 using System.Linq;
 
 namespace AimlConsoleBot;
 internal class Program {
-	internal static int Main(string[] args) {
-		var switches = true; string? botPath = null;
-		var extensionPaths = new List<string>();
+	private static readonly Argument<string> botPathArgument = new("botPath", "Path to the bot directory.");
+	private static readonly Option<ICollection<string>> extensionOption = new(["-e", "--extension"], "Load AIML extensions from the specified assembly.") { ArgumentHelpName = "path" };
+	private static readonly Option<LogLevel> verbosityOption = new(["-v", "--verbosity"], ParseVerbosity, true, "Set the logging verbosity level.") { Arity = ArgumentArity.ZeroOrOne };
+
+	private static LogLevel ParseVerbosity(ArgumentResult result) {
+		return result.Parent is null or OptionResult { IsImplicit: true } ? LogLevel.Information
+			: !result.Tokens.Any() ? LogLevel.Trace
+			: result.Tokens.Single().Value.ToLowerInvariant() switch {
+				"q" or "quiet" or "s" or "silent" => LogLevel.None,
+				"m" or "minimal" or "w" or "warning" => LogLevel.Warning,
+				"n" or "normal" or "i" or "info" or "information" => LogLevel.Information,
+				"d" or "detailed" or "debug" => LogLevel.Debug,
+				"diag" or "diagnostic" or "t" or "trace" => LogLevel.Trace,
+				_ => throw new ArgumentException("Unknown verbosity")
+			};
+	}
+
+	internal static void Main(string[] args) {
+		var rootCommand = new RootCommand("Runs an AIML bot on the console.") {
+			botPathArgument, extensionOption, verbosityOption
+		};
+		rootCommand.SetHandler(Run, botPathArgument, extensionOption, verbosityOption);
+		rootCommand.Invoke(args);
+	}
+
+	private static void Run(string botPath, ICollection<string> extensionPaths, LogLevel verbosity) {
 		var inputs = new List<string>();
 		List<Reply>? replies = null;
-
-		for (var i = 0; i < args.Length; ++i) {
-			var s = args[i];
-			if (switches && s.StartsWith("-")) {
-				switch (s) {
-					case "--":
-						switches = false;
-						break;
-					case "-h":
-					case "--help":
-					case "-?":
-					case "/?":
-						Console.WriteLine($"Usage: {nameof(AimlConsoleBot)} [switches] <bot path>");
-						Console.WriteLine("Available switches:");
-						Console.WriteLine("  -e [path], --extension [path]: Load AIML extensions from the specified assembly.");
-						Console.WriteLine("  --: Stop processing switches.");
-						return 0;
-					case "-e":
-					case "--extension":
-					case "--extensions":
-					case "-S":
-					case "--service":
-					case "--services":
-						extensionPaths.Add(args[++i]);
-						break;
-					default:
-						Console.Error.WriteLine($"Unknown switch {s}");
-						Console.Error.WriteLine($"Use `{nameof(AimlConsoleBot)} --help` for more information.");
-						return 1;
-				}
-			} else {
-				switches = false;
-				botPath = s;
-			}
-		}
-		if (botPath == null) {
-			Console.Error.WriteLine($"Usage: {nameof(AimlConsoleBot)} [switches] <bot path>");
-			Console.Error.WriteLine($"Use `{nameof(AimlConsoleBot)} --help` for more information.");
-			return 1;
-		}
 
 		foreach (var path in extensionPaths) {
 			Console.WriteLine($"Loading extensions from {path}...");
 			AimlLoader.AddExtensions(path);
 		}
 
-		var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().AddFile("logs/aiml-{Date}.log"));
+		var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole().AddFile("logs/{Date}.log").SetMinimumLevel(verbosity));
 		var bot = new Bot(botPath, loggerFactory);
 		bot.LoadConfig();
 		bot.LoadAiml();
@@ -76,7 +61,7 @@ internal class Program {
 			if (input is null) break;
 
 			var trace = false;
-			if (input.StartsWith("/")) {
+			if (input.StartsWith('/')) {
 				if (input.StartsWith("/trace ")) {
 					trace = true;
 					input = input[7..];
@@ -99,7 +84,7 @@ internal class Program {
 					replies ??= [];
 					Console.ForegroundColor = ConsoleColor.DarkMagenta;
 					Console.WriteLine($"[Replies (type /number to reply): {string.Join(", ", message.BlockElements.OfType<Reply>().Select(r => {
-						var s = $"({replies.Count}) {r.Text}";
+						var s = $"(/{replies.Count}) {r.Text}";
 						replies.Add(r);
 						return s;
 					}))}]");
@@ -107,7 +92,5 @@ internal class Program {
 				}
 			}
 		}
-
-		return 0;
 	}
 }
