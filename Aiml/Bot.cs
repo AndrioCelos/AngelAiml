@@ -325,7 +325,7 @@ public partial class Bot {
 				if (template != null) {
 					output = template.Content.Evaluate(process);
 				} else {
-					LogNoMatch(sentence.Text);
+					LogNoMatch(sentence.Text, that, topic);
 					output = Config.DefaultResponse;
 				}
 			} catch (TimeoutException) {
@@ -496,8 +496,8 @@ public partial class Bot {
 	[LoggerMessage(LogLevel.Trace, "Input matched category '{Path}' in {Uri} line {LineNumber}.")]
 	private partial void LogMatchCategory(string path, string? uri, int lineNumber);
 
-	[LoggerMessage(LogLevel.Warning, "No match for input '{Message}'.")]
-	private partial void LogNoMatch(string message);
+	[LoggerMessage(LogLevel.Warning, "No match for input {Message} <THAT> {That} <TOPIC> {Topic}")]
+	private partial void LogNoMatch(string message, string that, string topic);
 
 	#endregion
 }
