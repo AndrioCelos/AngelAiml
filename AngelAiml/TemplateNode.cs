@@ -52,7 +52,7 @@ public abstract class RecursiveTemplateTag(TemplateElementCollection children) :
 
 /// <summary>Represents constant text in place of a template-side AIML tag.</summary>
 public sealed partial class TemplateText : TemplateNode {
-	internal static TemplateText Space { get; } = new(" ");
+	internal static TemplateText Space { get; } = new(" ", false);
 
 	public string Text { get; private set; }
 
