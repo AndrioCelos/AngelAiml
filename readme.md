@@ -32,4 +32,4 @@ while (true) {
 
 ## Logging
 
-This library uses the Microsoft.Extensions.Logging framework for logging. Logging can be configured by passing an `ILoggerFactory` to the `Bot` constructor. The `AimlConsoleBot` project demonstrates how to log to the console and to a file.
+This library uses the Microsoft.Extensions.Logging framework for logging. Logging can be configured by passing an `ILoggerFactory` to the `Bot` constructor. The `AimlConsoleBot` project demonstrates how to log to the console and to a file using Serilog.
