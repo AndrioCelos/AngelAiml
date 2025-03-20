@@ -1,19 +1,19 @@
-# AIML (working title)
+# Angel AIML
 
-This is a .NET Standard library and accompanying software for running chat robots using [Artificial Intelligence Markup Language](http://www.aiml.foundation/).
+Angel AIML is a .NET library and accompanying software for running chat robots using [Artificial Intelligence Markup Language](http://www.aiml.foundation/).
 
-The following directories are included in this repository:
+The following projects are included in this repository:
 
-* **Aiml**: the core library
-* **AimlConsoleBot**: a basic .NET Core AIML interpreter
-* **AimlTester**: a console application that runs AIML unit tests (a non-standard AIML extension)
-* **AimlVoice**: an AIML interpreter using Windows Speech Recognition and text-to-speech features
-* **ExampleBot**: a sample set of AIML and configuration files for use with the AIML library
+* **Angel AIML**: the core library.
+* **Angel AIML Console**: a basic command-line AIML interpreter front-end.
+* **Angel AIML Tester**: a console application that runs AIML unit tests (a non-standard AIML extension).
+* **Angel AIML Voice Console**: an AIML interpreter using Windows Speech Recognition and text-to-speech features.
+* **ExampleBot**: a sample set of AIML and configuration files for use with the AIML library.
 
 ## Example usage
 
 ```Csharp
-using Aiml;
+using AngelAiml;
 
 var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
 var bot = new Bot(botPath, loggerFactory);
@@ -32,4 +32,4 @@ while (true) {
 
 ## Logging
 
-This library uses the Microsoft.Extensions.Logging framework for logging. Logging can be configured by passing an `ILoggerFactory` to the `Bot` constructor. The `AimlConsoleBot` project demonstrates how to log to the console and to a file using Serilog.
+This library uses the Microsoft.Extensions.Logging framework for logging. Logging can be configured by passing an `ILoggerFactory` to the `Bot` constructor. The [Angel Aiml Console](AngelAimlConsole) project demonstrates how to log to the console and to a file using Serilog.
