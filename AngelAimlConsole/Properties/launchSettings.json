@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "AimlConsoleBot": {
+    "Angel AIML Console": {
       "commandName": "Project",
       "commandLineArgs": "../../../../ExampleBot"
     }

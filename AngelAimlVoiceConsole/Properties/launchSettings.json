@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "AimlVoice": {
+    "Angel AIML Voice Console": {
       "commandName": "Project",
       "commandLineArgs": "--no-sr ../../../../ExampleBot"
     }
