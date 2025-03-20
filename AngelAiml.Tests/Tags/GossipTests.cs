@@ -10,7 +10,9 @@ public class GossipTests {
 		var test = new AimlTest();
 		test.Bot.Gossip += (_, e) => { gossipMessage = e.Message; e.Handled = true; };
 		var tag = new Gossip(new("Hello, world!"));
-		Assert.AreEqual("Hello, world!", tag.Evaluate(test.RequestProcess));
-		Assert.AreEqual("Hello, world!", gossipMessage);
+		Assert.Multiple(() => {
+			Assert.That(tag.Evaluate(test.RequestProcess), Is.EqualTo("Hello, world!"));
+			Assert.That(gossipMessage, Is.EqualTo("Hello, world!"));
+		});
 	}
 }

@@ -23,6 +23,6 @@ public class SizeTests {
 </aiml>"));
 
 		var tag = new Size();
-		Assert.AreEqual("2", tag.Evaluate(test.RequestProcess));
+		Assert.That(tag.Evaluate(test.RequestProcess), Is.EqualTo("2"));
 	}
 }

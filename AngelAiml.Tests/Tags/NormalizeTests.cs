@@ -9,6 +9,6 @@ public class NormalizeTests {
 		var test = new AimlTest();
 		test.Bot.Config.NormalSubstitutions.Add(new(" foo ", " bar "));
 		var tag = new Normalize(new("foo"));
-		Assert.AreEqual("bar", tag.Evaluate(test.RequestProcess).ToString());
+		Assert.That(tag.Evaluate(test.RequestProcess).ToString(), Is.EqualTo("bar"));
 	}
 }

@@ -7,6 +7,6 @@ public class FormalTests {
 	[Test]
 	public void Evaluate() {
 		var tag = new Formal(new("hello WORLD says I."));
-		Assert.AreEqual("Hello World Says I.", tag.Evaluate(new AimlTest().RequestProcess).ToString());
+		Assert.That(tag.Evaluate(new AimlTest().RequestProcess).ToString(), Is.EqualTo("Hello World Says I."));
 	}
 }

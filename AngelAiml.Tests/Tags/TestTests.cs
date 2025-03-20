@@ -20,19 +20,23 @@ public class TestTests {
 	[Test]
 	public void ParseWithConstant() {
 		var tag = new Test(name: new("SampleTest"), expected: new("Hello world"), regex: null, children: new("Hello world"));
-		Assert.AreEqual("SampleTest", tag.Name);
-		Assert.AreEqual("Hello world", tag.ExpectedResponse.ToString());
-		Assert.IsFalse(tag.UseRegex);
-		Assert.AreEqual("Hello world", tag.Children.ToString());
+		Assert.Multiple(() => {
+			Assert.That(tag.Name, Is.EqualTo("SampleTest"));
+			Assert.That(tag.ExpectedResponse.ToString(), Is.EqualTo("Hello world"));
+		});
+		Assert.That(tag.UseRegex, Is.False);
+		Assert.That(tag.Children.ToString(), Is.EqualTo("Hello world"));
 	}
 
 	[Test]
 	public void ParseWithRegex() {
 		var tag = new Test(name: new("SampleTest"), expected: null, regex: new("^Hello"), children: new("Hello world"));
-		Assert.AreEqual("SampleTest", tag.Name);
-		Assert.AreEqual("^Hello", tag.ExpectedResponse.ToString());
-		Assert.IsTrue(tag.UseRegex);
-		Assert.AreEqual("Hello world", tag.Children.ToString());
+		Assert.Multiple(() => {
+			Assert.That(tag.Name, Is.EqualTo("SampleTest"));
+			Assert.That(tag.ExpectedResponse.ToString(), Is.EqualTo("^Hello"));
+		});
+		Assert.That(tag.UseRegex, Is.True);
+		Assert.That(tag.Children.ToString(), Is.EqualTo("Hello world"));
 	}
 
 	[Test]
@@ -55,8 +59,8 @@ public class TestTests {
 		var test = GetTest();
 		test.RequestProcess.testResults = [ ];
 		var tag = new Test(name: new("SampleTest"), expected: new("Hello world"), regex: null, children: new("Hello\nworld"));
-		Assert.AreEqual("Hello world", tag.Evaluate(test.RequestProcess).ToString());
-		Assert.IsTrue(test.RequestProcess.testResults["SampleTest"].Passed);
+		Assert.That(tag.Evaluate(test.RequestProcess).ToString(), Is.EqualTo("Hello world"));
+		Assert.That(test.RequestProcess.testResults["SampleTest"].Passed, Is.True);
 	}
 
 	[Test]
@@ -64,8 +68,8 @@ public class TestTests {
 		var test = GetTest();
 		test.RequestProcess.testResults = [ ];
 		var tag = new Test(name: new("SampleTest"), expected: new("Hello world"), regex: null, children: new("Hell world"));
-		Assert.AreEqual("Hell world", tag.Evaluate(test.RequestProcess).ToString());
-		Assert.IsFalse(test.RequestProcess.testResults["SampleTest"].Passed);
+		Assert.That(tag.Evaluate(test.RequestProcess).ToString(), Is.EqualTo("Hell world"));
+		Assert.That(test.RequestProcess.testResults["SampleTest"].Passed, Is.False);
 	}
 
 	[Test]
@@ -73,8 +77,8 @@ public class TestTests {
 		var test = GetTest();
 		test.RequestProcess.testResults = [ ];
 		var tag = new Test(name: new("SampleTest"), expected: null, regex: new("^Hello\n\\w"), children: new("Hello world"));
-		Assert.AreEqual("Hello world", tag.Evaluate(test.RequestProcess).ToString());
-		Assert.IsTrue(test.RequestProcess.testResults["SampleTest"].Passed);
+		Assert.That(tag.Evaluate(test.RequestProcess).ToString(), Is.EqualTo("Hello world"));
+		Assert.That(test.RequestProcess.testResults["SampleTest"].Passed, Is.True);
 	}
 
 	[Test]
@@ -82,8 +86,8 @@ public class TestTests {
 		var test = GetTest();
 		test.RequestProcess.testResults = [ ];
 		var tag = new Test(name: new("SampleTest"), expected: null, regex: new("^Hello"), children: new("Hell world"));
-		Assert.AreEqual("Hell world", tag.Evaluate(test.RequestProcess).ToString());
-		Assert.IsFalse(test.RequestProcess.testResults["SampleTest"].Passed);
+		Assert.That(tag.Evaluate(test.RequestProcess).ToString(), Is.EqualTo("Hell world"));
+		Assert.That(test.RequestProcess.testResults["SampleTest"].Passed, Is.False);
 	}
 
 	[Test]
@@ -91,15 +95,17 @@ public class TestTests {
 		var test = GetTest();
 		test.RequestProcess.testResults = [ ];
 		var tag = new Test(name: new("SampleTest"), expected: null, regex: new("("), children: new("Hello world"));
-		Assert.AreEqual("Hello world", test.AssertWarning(() => tag.Evaluate(test.RequestProcess).ToString()));
-		Assert.IsFalse(test.RequestProcess.testResults["SampleTest"].Passed);
+		Assert.That(test.AssertWarning(() => tag.Evaluate(test.RequestProcess).ToString()), Is.EqualTo("Hello world"));
+		Assert.That(test.RequestProcess.testResults["SampleTest"].Passed, Is.False);
 	}
 
 	[Test]
 	public void Evaluate_TestsDisabled() {
 		var test = GetTest();
 		var tag = new Test(name: new("SampleTest"), expected: new("Hello world"), regex: null, children: new("Hello world"));
-		Assert.AreEqual("Hello world", test.AssertWarning(() => tag.Evaluate(test.RequestProcess).ToString()));
-		Assert.IsNull(test.RequestProcess.testResults);
+		Assert.Multiple(() => {
+			Assert.That(test.AssertWarning(() => tag.Evaluate(test.RequestProcess).ToString()), Is.EqualTo("Hello world"));
+			Assert.That(test.RequestProcess.testResults, Is.Null);
+		});
 	}
 }

@@ -6,17 +6,17 @@ public class TripleCollectionTests {
 	public void Add_NewTriple() {
 		var triple = new Triple("Alice", "age", "25");
 		var subject = new TripleCollection(StringComparer.InvariantCultureIgnoreCase);
-		Assert.IsTrue(subject.Add(triple));
-		Assert.AreEqual(1, subject.Count);
-		Assert.AreSame(triple, subject.First());
+		Assert.That(subject.Add(triple), Is.True);
+		Assert.That(subject, Has.Count.EqualTo(1));
+		Assert.That(subject.First(), Is.SameAs(triple));
 	}
 	[Test]
 	public void Add_ExistingTriple() {
 		var triple = new Triple("Alice", "age", "25");
 		var subject = new TripleCollection(StringComparer.InvariantCultureIgnoreCase) { triple };
-		Assert.IsFalse(subject.Add("Alice", "age", "25"));
-		Assert.AreEqual(1, subject.Count);
-		Assert.AreSame(triple, subject.First());
+		Assert.That(subject.Add("Alice", "age", "25"), Is.False);
+		Assert.That(subject, Has.Count.EqualTo(1));
+		Assert.That(subject.First(), Is.SameAs(triple));
 	}
 
 	[Test]
@@ -25,8 +25,8 @@ public class TripleCollectionTests {
 			{ "Alice", "age", "25" },
 			{ "Alice", "friendOf", "Bob" }
 		};
-		Assert.IsTrue(subject.Remove("Alice", "age", "25"));
-		Assert.AreEqual(1, subject.Count);
+		Assert.That(subject.Remove("Alice", "age", "25"), Is.True);
+		Assert.That(subject, Has.Count.EqualTo(1));
 	}
 
 	[Test]
@@ -35,8 +35,8 @@ public class TripleCollectionTests {
 			{ "Alice", "age", "25" },
 			{ "Alice", "friendOf", "Bob" }
 		};
-		Assert.IsFalse(subject.Remove("Alice", "friendOf", "Carol"));
-		Assert.AreEqual(2, subject.Count);
+		Assert.That(subject.Remove("Alice", "friendOf", "Carol"), Is.False);
+		Assert.That(subject, Has.Count.EqualTo(2));
 	}
 
 	[Test]
@@ -47,8 +47,10 @@ public class TripleCollectionTests {
 			{ "Alice", "friendOf", "Carol" },
 			{ "Alice", "friendOf", "Dan" }
 		};
-		Assert.AreEqual(3, subject.RemoveAll("Alice", "friendOf"));
-		Assert.AreEqual(1, subject.Count);
+		Assert.Multiple(() => {
+			Assert.That(subject.RemoveAll("Alice", "friendOf"), Is.EqualTo(3));
+			Assert.That(subject, Has.Count.EqualTo(1));
+		});
 	}
 
 	[Test]
@@ -56,8 +58,10 @@ public class TripleCollectionTests {
 		var subject = new TripleCollection(StringComparer.InvariantCultureIgnoreCase) {
 			{ "Alice", "age", "25" }
 		};
-		Assert.AreEqual(0, subject.RemoveAll("Alice", "friendOf"));
-		Assert.AreEqual(1, subject.Count);
+		Assert.Multiple(() => {
+			Assert.That(subject.RemoveAll("Alice", "friendOf"), Is.EqualTo(0));
+			Assert.That(subject, Has.Count.EqualTo(1));
+		});
 	}
 
 	[Test]
@@ -68,8 +72,10 @@ public class TripleCollectionTests {
 			{ "Alice", "friendOf", "Carol" },
 			{ "Alice", "friendOf", "Dan" }
 		};
-		Assert.AreEqual(4, subject.RemoveAll("Alice"));
-		Assert.AreEqual(0, subject.Count);
+		Assert.Multiple(() => {
+			Assert.That(subject.RemoveAll("Alice"), Is.EqualTo(4));
+			Assert.That(subject.Count, Is.EqualTo(0));
+		});
 	}
 
 	[Test]
@@ -77,8 +83,10 @@ public class TripleCollectionTests {
 		var subject = new TripleCollection(StringComparer.InvariantCultureIgnoreCase) {
 			{ "Alice", "age", "25" }
 		};
-		Assert.AreEqual(0, subject.RemoveAll("Bob", "friendOf"));
-		Assert.AreEqual(1, subject.Count);
+		Assert.Multiple(() => {
+			Assert.That(subject.RemoveAll("Bob", "friendOf"), Is.EqualTo(0));
+			Assert.That(subject, Has.Count.EqualTo(1));
+		});
 	}
 
 	[Test()]
@@ -88,8 +96,8 @@ public class TripleCollectionTests {
 			{ "Alice", "friendOf", "Bob" }
 		};
 		subject.Clear();
-		Assert.AreEqual(0, subject.Count);
-		Assert.IsEmpty(subject);
+		Assert.That(subject.Count, Is.EqualTo(0));
+		Assert.That(subject, Is.Empty);
 	}
 
 	private static TripleCollection GetTestCollection() => new(StringComparer.InvariantCultureIgnoreCase) {
@@ -107,9 +115,11 @@ public class TripleCollectionTests {
 	[Test]
 	public void Match_CaseInsensitive() {
 		var result = GetTestCollection().Match("alice", "friendof", "bob").Single();
-		Assert.AreEqual("Alice", result.Subject);
-		Assert.AreEqual("friendOf", result.Predicate);
-		Assert.AreEqual("Bob", result.Object);
+		Assert.Multiple(() => {
+			Assert.That(result.Subject, Is.EqualTo("Alice"));
+			Assert.That(result.Predicate, Is.EqualTo("friendOf"));
+			Assert.That(result.Object, Is.EqualTo("Bob"));
+		});
 	}
 
 	[TestCase("Carol", "friendOf", "Erin", ExpectedResult = 1, TestName = "Match count (all properties; present)")]

@@ -7,13 +7,13 @@ public class InputTests {
 	[Test]
 	public void ParseWithIndex() {
 		var tag = new Input(new("2"));
-		Assert.AreEqual("2", tag.Index?.ToString());
+		Assert.That(tag.Index?.ToString(), Is.EqualTo("2"));
 	}
 
 	[Test]
 	public void ParseWithDefault() {
 		var tag = new Input(null);
-		Assert.IsNull(tag.Index);
+		Assert.That(tag.Index, Is.Null);
 	}
 
 	[Test]
@@ -23,7 +23,7 @@ public class InputTests {
 		test.User.Requests.Add(new("Hello again.", test.User, test.Bot));
 
 		var tag = new Input(new("2"));
-		Assert.AreEqual("This is a test", tag.Evaluate(test.RequestProcess).ToString());
+		Assert.That(tag.Evaluate(test.RequestProcess).ToString(), Is.EqualTo("This is a test"));
 	}
 
 	[Test]
@@ -33,6 +33,6 @@ public class InputTests {
 		test.User.Requests.Add(new("Hello again.", test.User, test.Bot));
 
 		var tag = new Input(null);
-		Assert.AreEqual("Hello again", tag.Evaluate(test.RequestProcess).ToString());
+		Assert.That(tag.Evaluate(test.RequestProcess).ToString(), Is.EqualTo("Hello again"));
 	}
 }

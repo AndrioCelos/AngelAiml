@@ -6,48 +6,58 @@ public class DateTests {
 	[Test]
 	public void ParseWithFormatFull() {
 		var tag = new Date(format: new("%F"), jformat: null, nformat: null, locale: new("en-AU"), timezone: new("0"));
-		Assert.AreEqual("%F", tag.Format?.ToString());
-		Assert.AreEqual("en-AU", tag.Locale?.ToString());
-		Assert.AreEqual("0", tag.Timezone?.ToString());
+		Assert.Multiple(() => {
+			Assert.That(tag.Format?.ToString(), Is.EqualTo("%F"));
+			Assert.That(tag.Locale?.ToString(), Is.EqualTo("en-AU"));
+			Assert.That(tag.Timezone?.ToString(), Is.EqualTo("0"));
+		});
 	}
 
 	[Test]
 	public void ParseWithJFormatFull() {
 		var tag = new Date(format: null, jformat: new("yyyy-MM-dd"), nformat: null, locale: new("en-AU"), timezone: new("0"));
-		Assert.AreEqual("yyyy-MM-dd", tag.JFormat?.ToString());
-		Assert.AreEqual("en-AU", tag.Locale?.ToString());
-		Assert.AreEqual("0", tag.Timezone?.ToString());
+		Assert.Multiple(() => {
+			Assert.That(tag.JFormat?.ToString(), Is.EqualTo("yyyy-MM-dd"));
+			Assert.That(tag.Locale?.ToString(), Is.EqualTo("en-AU"));
+			Assert.That(tag.Timezone?.ToString(), Is.EqualTo("0"));
+		});
 	}
 
 	[Test]
 	public void ParseWithFormat() {
 		var tag = new Date(format: new("%F"), jformat: null, nformat: null, locale: null, timezone: null);
-		Assert.AreEqual("%F", tag.Format?.ToString());
-		Assert.IsNull(tag.Locale);
-		Assert.IsNull(tag.Timezone);
+		Assert.Multiple(() => {
+			Assert.That(tag.Format?.ToString(), Is.EqualTo("%F"));
+			Assert.That(tag.Locale, Is.Null);
+			Assert.That(tag.Timezone, Is.Null);
+		});
 	}
 
 	[Test]
 	public void ParseWithJFormat() {
 		var tag = new Date(format: null, jformat: new("yyyy-MM-dd"), nformat: null, locale: null, timezone: null);
-		Assert.AreEqual("yyyy-MM-dd", tag.JFormat?.ToString());
-		Assert.IsNull(tag.Locale);
-		Assert.IsNull(tag.Timezone);
+		Assert.Multiple(() => {
+			Assert.That(tag.JFormat?.ToString(), Is.EqualTo("yyyy-MM-dd"));
+			Assert.That(tag.Locale, Is.Null);
+			Assert.That(tag.Timezone, Is.Null);
+		});
 	}
 
 	[Test]
 	public void ParseWithDefaults() {
 		var tag = new Date(format: null, jformat: null, nformat: null, locale: null, timezone: null);
-		Assert.IsNull(tag.Format);
-		Assert.IsNull(tag.Locale);
-		Assert.IsNull(tag.Timezone);
+		Assert.Multiple(() => {
+			Assert.That(tag.Format, Is.Null);
+			Assert.That(tag.Locale, Is.Null);
+			Assert.That(tag.Timezone, Is.Null);
+		});
 	}
 
 	[Test]
 	public void EvaluateWithBasicFormat() {
 		var process = new AimlTest().RequestProcess;
 		Date.mockDateTime = new(2010, 1, 2, 0, 15, 30, DateTimeKind.Utc);
-		Assert.AreEqual("2010-01-02 00:15:30", new Date(new("%Y-%m-%d %H:%M:%S"), null, null, new("en-AU"), new("0")).Evaluate(process).ToString());
+		Assert.That(new Date(new("%Y-%m-%d %H:%M:%S"), null, null, new("en-AU"), new("0")).Evaluate(process).ToString(), Is.EqualTo("2010-01-02 00:15:30"));
 	}
 
 	[TestCase("%a", ExpectedResult = "Sat", TestName = "UNIX format specifier %a")]
@@ -103,14 +113,14 @@ public class DateTests {
 	public void EvaluateWithBasicJFormat() {
 		var process = new AimlTest().RequestProcess;
 		Date.mockDateTime = new(2010, 1, 2, 0, 15, 30, 789, DateTimeKind.Utc);
-		Assert.AreEqual("2010-01-02 00:15:30", new Date(null, new("yyyy-MM-dd HH:mm:ss"), null, new("en-AU"), new("0")).Evaluate(process).ToString());
+		Assert.That(new Date(null, new("yyyy-MM-dd HH:mm:ss"), null, new("en-AU"), new("0")).Evaluate(process).ToString(), Is.EqualTo("2010-01-02 00:15:30"));
 	}
 
 	[Test]
 	public void EvaluateWithQuotedJFormat() {
 		var process = new AimlTest().RequestProcess;
 		Date.mockDateTime = new(2010, 1, 2, 0, 15, 30, 789, DateTimeKind.Utc);
-		Assert.AreEqual("'2010-01-02T00:15:30Z'", new Date(null, new("''yyyy-MM-dd'T'HH:mm:ss'Z'''"), null, new("en-AU"), new("0")).Evaluate(process).ToString());
+		Assert.That(new Date(null, new("''yyyy-MM-dd'T'HH:mm:ss'Z'''"), null, new("en-AU"), new("0")).Evaluate(process).ToString(), Is.EqualTo("'2010-01-02T00:15:30Z'"));
 	}
 
 	[TestCase("G", ExpectedResult = "AD", TestName = "Java format specifier G")]
@@ -157,20 +167,20 @@ public class DateTests {
 	public void EvaluateWithTimeZone() {
 		var process = new AimlTest().RequestProcess;
 		Date.mockDateTime = new(2010, 1, 2, 0, 15, 30, 789, DateTimeKind.Utc);
-		Assert.AreEqual("2010-01-01 19:15:30", new Date(null, new("yyyy-MM-dd HH:mm:ss"), null, new("en-AU"), new("+5")).Evaluate(process).ToString());
+		Assert.That(new Date(null, new("yyyy-MM-dd HH:mm:ss"), null, new("en-AU"), new("+5")).Evaluate(process).ToString(), Is.EqualTo("2010-01-01 19:15:30"));
 	}
 
 	[Test]
 	public void EvaluateWithTimeZoneWithMinutes() {
 		var process = new AimlTest().RequestProcess;
 		Date.mockDateTime = new(2010, 1, 2, 0, 15, 30, 789, DateTimeKind.Utc);
-		Assert.AreEqual("2010-01-02 14:00:30", new Date(null, new("yyyy-MM-dd HH:mm:ss"), null, new("en-AU"), new("-13:45")).Evaluate(process).ToString());
+		Assert.That(new Date(null, new("yyyy-MM-dd HH:mm:ss"), null, new("en-AU"), new("-13:45")).Evaluate(process).ToString(), Is.EqualTo("2010-01-02 14:00:30"));
 	}
 
 	[Test]
 	public void EvaluateWithTimeZoneWithWhitespace() {
 		var process = new AimlTest().RequestProcess;
 		Date.mockDateTime = new(2010, 1, 2, 0, 15, 30, 789, DateTimeKind.Utc);
-		Assert.AreEqual("2010-01-02 14:00:30", new Date(null, new("yyyy-MM-dd HH:mm:ss"), null, new("en-AU"), new(" - 13\n\t: 45 ")).Evaluate(process).ToString());
+		Assert.That(new Date(null, new("yyyy-MM-dd HH:mm:ss"), null, new("en-AU"), new(" - 13\n\t: 45 ")).Evaluate(process).ToString(), Is.EqualTo("2010-01-02 14:00:30"));
 	}
 }

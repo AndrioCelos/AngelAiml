@@ -8,6 +8,6 @@ public class SystemTests {
 	public void Evaluate_DisabledByDefault() {
 		var test = new AimlTest();
 		var tag = new AngelAiml.Tags.System(new("foo"));
-		Assert.AreEqual(test.Bot.Config.SystemFailedMessage, test.AssertWarning(() => tag.Evaluate(test.RequestProcess).ToString()));
+		Assert.That(test.AssertWarning(() => tag.Evaluate(test.RequestProcess).ToString()), Is.EqualTo(test.Bot.Config.SystemFailedMessage));
 	}
 }

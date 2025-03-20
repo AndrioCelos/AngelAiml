@@ -7,6 +7,6 @@ public class SentenceTests {
 	[Test]
 	public void Evaluate() {
 		var tag = new Sentence(new("hello WORLD says I."));
-		Assert.AreEqual("Hello WORLD says I.", tag.Evaluate(new AimlTest().RequestProcess).ToString());
+		Assert.That(tag.Evaluate(new AimlTest().RequestProcess).ToString(), Is.EqualTo("Hello WORLD says I."));
 	}
 }

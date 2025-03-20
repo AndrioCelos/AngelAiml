@@ -17,7 +17,7 @@ public class SraiTests {
 </aiml>"));
 
 		var tag = new Srai(new("test"));
-		Assert.AreEqual("Hello world!", tag.Evaluate(test.RequestProcess));
+		Assert.That(tag.Evaluate(test.RequestProcess), Is.EqualTo("Hello world!"));
 	}
 
 	[Test]

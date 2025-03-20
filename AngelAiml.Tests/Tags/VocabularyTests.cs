@@ -27,6 +27,6 @@ public class VocabularyTests {
 		test.Bot.Sets["testset"] = new StringSet(["A", "B", "C D"], test.Bot.Config.StringComparer);
 
 		var tag = new Vocabulary();
-		Assert.AreEqual("7", tag.Evaluate(test.RequestProcess));
+		Assert.That(tag.Evaluate(test.RequestProcess), Is.EqualTo("7"));
 	}
 }

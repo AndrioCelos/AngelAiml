@@ -1,5 +1,4 @@
 ﻿using AngelAiml.Tags;
-using NUnit.Framework.Constraints;
 using NUnit.Framework.Internal;
 
 namespace AngelAiml.Tests.Tags;
@@ -21,34 +20,36 @@ public class UniqTests {
 	[Test]
 	public void Parse() {
 		var tag = new Uniq(new("M"), new("attr"), new("?"));
-		Assert.AreEqual("M", tag.Subject.ToString());
-		Assert.AreEqual("attr", tag.Predicate.ToString());
-		Assert.AreEqual("?", tag.Object.ToString());
+		Assert.Multiple(() => {
+			Assert.That(tag.Subject.ToString(), Is.EqualTo("M"));
+			Assert.That(tag.Predicate.ToString(), Is.EqualTo("attr"));
+			Assert.That(tag.Object.ToString(), Is.EqualTo("?"));
+		});
 	}
 
 	[Test]
 	public void Evaluate_Object() {
 		var tag = new Uniq(new("M"), new("attr"), new("?"));
-		Assert.AreEqual("1", tag.Evaluate(GetTest().RequestProcess).ToString());
+		Assert.That(tag.Evaluate(GetTest().RequestProcess).ToString(), Is.EqualTo("1"));
 	}
 
 	[Test]
 	public void Evaluate_Subject() {
 		var tag = new Uniq(new("?"), new("r"), new("M"));
-		Assert.AreEqual("A", tag.Evaluate(GetTest().RequestProcess).ToString());
+		Assert.That(tag.Evaluate(GetTest().RequestProcess).ToString(), Is.EqualTo("A"));
 	}
 
 	[Test]
 	public void Evaluate_NoVariable() {
 		var test = GetTest();
 		var tag = new Uniq(new("M"), new("attr"), new("1"));
-		Assert.AreEqual(test.Bot.Config.DefaultTriple, test.AssertWarning(() => tag.Evaluate(test.RequestProcess).ToString()));
+		Assert.That(test.AssertWarning(() => tag.Evaluate(test.RequestProcess).ToString()), Is.EqualTo(test.Bot.Config.DefaultTriple));
 	}
 
 	[Test]
 	public void Evaluate_MultipleVariables() {
 		var test = GetTest();
 		var tag = new Uniq(new("?"), new("attr"), new("?"));
-		Assert.That(test.AssertWarning(() => tag.Evaluate(test.RequestProcess).ToString()), new AnyOfConstraint(["1", "0"]));
+		Assert.That(test.AssertWarning(() => tag.Evaluate(test.RequestProcess).ToString()), Is.AnyOf(["0", "1"]));
 	}
 }

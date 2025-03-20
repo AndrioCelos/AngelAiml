@@ -31,7 +31,7 @@ public class CalculateTests {
 	[TestCase("pi ()", TestName = "Function - empty argument list")]
 	public void EvaluatePi(string expr) {
 		var tag = new Calculate(new(expr));
-		Assert.AreEqual(Math.PI, double.Parse(tag.Evaluate(new AimlTest().RequestProcess).ToString()), 1e-6);
+		Assert.That(double.Parse(tag.Evaluate(new AimlTest().RequestProcess).ToString()), Is.EqualTo(Math.PI).Within(1e-6));
 	}
 
 	[TestCase(" ", TestName = "Invalid - empty expression")]
@@ -44,6 +44,6 @@ public class CalculateTests {
 	public void InvalidEvaluate(string expr) {
 		var test = new AimlTest();
 		var tag = new Calculate(new(expr));
-		Assert.AreEqual("unknown", test.AssertWarning(() => tag.Evaluate(test.RequestProcess)));
+		Assert.That(test.AssertWarning(() => tag.Evaluate(test.RequestProcess)), Is.EqualTo("unknown"));
 	}
 }

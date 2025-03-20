@@ -24,7 +24,7 @@ public class SelectTests {
 			new(new("?x"), new("r"), new("?y"), true),
 			new(new("?y"), new("r"), new("X"), true)
 		]);
-		Assert.AreEqual("Aj94AUE=", tag.Evaluate(GetTest().RequestProcess).ToString());
+		Assert.That(tag.Evaluate(GetTest().RequestProcess).ToString(), Is.EqualTo("Aj94AUE="));
 	}
 
 	[Test]
@@ -33,13 +33,13 @@ public class SelectTests {
 			new(new("?x"), new("r"), new("?y"), true),
 			new(new("?y"), new("r"), new("X"), true)
 		]);
-		Assert.AreEqual("Aj95AU4CP3gBQQ== Aj95AU8CP3gBQQ==", tag.Evaluate(GetTest().RequestProcess).ToString());
+		Assert.That(tag.Evaluate(GetTest().RequestProcess).ToString(), Is.EqualTo("Aj95AU4CP3gBQQ== Aj95AU8CP3gBQQ=="));
 	}
 
 	[Test]
 	public void EvaluateNoMatch() {
 		var tag = new Select(new("?x"), [new(new("A"), new("attr"), new("?x"), true)]);
-		Assert.AreEqual("nil", tag.Evaluate(GetTest().RequestProcess).ToString());
+		Assert.That(tag.Evaluate(GetTest().RequestProcess).ToString(), Is.EqualTo("nil"));
 	}
 
 	[Test]
@@ -48,7 +48,7 @@ public class SelectTests {
 			new(new("A"), new("r"), new("?y"), true),
 			new(new("?y"), new("attr"), new("0"), false)
 		]);
-		Assert.AreEqual("Aj95AU0= Aj95AU8=", tag.Evaluate(GetTest().RequestProcess).ToString());
+		Assert.That(tag.Evaluate(GetTest().RequestProcess).ToString(), Is.EqualTo("Aj95AU0= Aj95AU8="));
 	}
 
 	[Test]
@@ -60,16 +60,22 @@ public class SelectTests {
 	<notq><subj>?y</subj><pred>attr</pred><obj>0</obj></notq>
 </select>";
 		var tag = Select.FromXml(XElement.Parse(xml), new AimlTest().Bot.AimlLoader);
-		Assert.AreEqual("?x", tag.Variables?.ToString());
-		Assert.AreEqual(2, tag.Clauses.Length);
-		Assert.IsTrue(tag.Clauses[0].Affirm);
-		Assert.AreEqual("?x", tag.Clauses[0].Subject.ToString());
-		Assert.AreEqual("r", tag.Clauses[0].Predicate.ToString());
-		Assert.AreEqual("?y", tag.Clauses[0].Object.ToString());
-		Assert.IsFalse(tag.Clauses[1].Affirm);
-		Assert.AreEqual("?y", tag.Clauses[1].Subject.ToString());
-		Assert.AreEqual("attr", tag.Clauses[1].Predicate.ToString());
-		Assert.AreEqual("0", tag.Clauses[1].Object.ToString());
+		Assert.Multiple(() => {
+			Assert.That(tag.Variables?.ToString(), Is.EqualTo("?x"));
+			Assert.That(tag.Clauses, Has.Length.EqualTo(2));
+		});
+		Assert.That(tag.Clauses[0].Affirm, Is.True);
+		Assert.Multiple(() => {
+			Assert.That(tag.Clauses[0].Subject.ToString(), Is.EqualTo("?x"));
+			Assert.That(tag.Clauses[0].Predicate.ToString(), Is.EqualTo("r"));
+			Assert.That(tag.Clauses[0].Object.ToString(), Is.EqualTo("?y"));
+		});
+		Assert.That(tag.Clauses[1].Affirm, Is.False);
+		Assert.Multiple(() => {
+			Assert.That(tag.Clauses[1].Subject.ToString(), Is.EqualTo("?y"));
+			Assert.That(tag.Clauses[1].Predicate.ToString(), Is.EqualTo("attr"));
+			Assert.That(tag.Clauses[1].Object.ToString(), Is.EqualTo("0"));
+		});
 	}
 
 	[Test]
@@ -80,7 +86,7 @@ public class SelectTests {
 	<notq><subj>?y</subj><pred>attr</pred><obj>0</obj></notq>
 </select>";
 		var tag = Select.FromXml(XElement.Parse(xml), new AimlTest().Bot.AimlLoader);
-		Assert.IsNull(tag.Variables);
+		Assert.That(tag.Variables, Is.Null);
 	}
 
 	[Test]

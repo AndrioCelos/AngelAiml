@@ -1,6 +1,4 @@
-﻿using System.Text;
-using System.Xml;
-using System.Xml.Linq;
+﻿using System.Xml.Linq;
 using AngelAiml.Tags;
 using NUnit.Framework.Internal;
 
@@ -11,7 +9,7 @@ public class LearnFTests {
 	public void Parse() {
 		var el = XElement.Parse("<learnf><category><pattern>TEST LEARNF</pattern><template>Original: <eval><input/></eval>; Current: <input/></template></category></learnf>");
 		var tag = new LearnF(el);
-		Assert.AreSame(el, tag.Element);
+		Assert.That(tag.Element, Is.SameAs(el));
 	}
 
 	[TestCase("<learnf/>", TestName = "Parse (no category)")]
@@ -31,7 +29,7 @@ public class LearnFTests {
 		tag.Evaluate(test.RequestProcess);
 
 		test.User.Requests.Add(new("TEST LEARNF", test.User, test.Bot));
-		Assert.AreEqual("Original: TEST; Current: TEST LEARNF", AimlTest.GetTemplate(test.Bot.Graphmaster, "TEST", "LEARNF", "<that>", "*", "<topic>", "*").Content.Evaluate(new(new(new("TEST LEARNF", test.User, test.Bot), "TEST LEARNF"), 0, false)));
+		Assert.That(AimlTest.GetTemplate(test.Bot.Graphmaster, "TEST", "LEARNF", "<that>", "*", "<topic>", "*").Content.Evaluate(new(new(new("TEST LEARNF", test.User, test.Bot), "TEST LEARNF"), 0, false)), Is.EqualTo("Original: TEST; Current: TEST LEARNF"));
 	}
 
 	[Test]
@@ -43,7 +41,7 @@ public class LearnFTests {
 		test.User.Requests.Add(new("TEST", test.User, test.Bot));
 		tag.Evaluate(test.RequestProcess);
 
-		Assert.AreEqual(xml, LearnTests.GetOuterXml(tag.Element));
+		Assert.That(LearnTests.GetOuterXml(tag.Element), Is.EqualTo(xml));
 	}
 
 	[Test]

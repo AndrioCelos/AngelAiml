@@ -7,12 +7,12 @@ public class ExplodeTests {
 	[Test]
 	public void EvaluateWithSpaces() {
 		var tag = new Explode(new("Hello world"));
-		Assert.AreEqual("H e l l o w o r l d", tag.Evaluate(new AimlTest().RequestProcess).ToString());
+		Assert.That(tag.Evaluate(new AimlTest().RequestProcess).ToString(), Is.EqualTo("H e l l o w o r l d"));
 	}
 
 	[Test]
 	public void EvaluateWithPunctuation() {
 		var tag = new Explode(new("1.5"));
-		Assert.AreEqual("1 5", tag.Evaluate(new AimlTest().RequestProcess).ToString());
+		Assert.That(tag.Evaluate(new AimlTest().RequestProcess).ToString(), Is.EqualTo("1 5"));
 	}
 }

@@ -1,5 +1,4 @@
-﻿using System.Xml;
-using System.Xml.Linq;
+﻿using System.Xml.Linq;
 using AngelAiml.Tags;
 using NUnit.Framework.Internal;
 
@@ -9,16 +8,18 @@ public class OobTests {
 	[Test]
 	public void Evaluate() {
 		var tag = new Oob("oob", Enumerable.Empty<XAttribute>(), new("<testoob>foo</testoob>"));
-		Assert.AreEqual("<oob><testoob>foo</testoob></oob>", tag.Evaluate(new AimlTest().RequestProcess));
+		Assert.That(tag.Evaluate(new AimlTest().RequestProcess), Is.EqualTo("<oob><testoob>foo</testoob></oob>"));
 	}
 
 	[Test]
 	public void FromXml() {
 		var tag = Oob.FromXml(XElement.Parse("<oob><testoob><input/></testoob></oob>"), new AimlTest().Bot.AimlLoader);
-		Assert.AreEqual("oob", tag.Name);
-		Assert.IsEmpty(tag.Attributes);
-		Assert.IsInstanceOf<Oob>(tag.Children[0]);
-		Assert.IsInstanceOf<Input>(((Oob) tag.Children[0]).Children[0]);
+		Assert.Multiple(() => {
+			Assert.That(tag.Name, Is.EqualTo("oob"));
+			Assert.That(tag.Attributes, Is.Empty);
+			Assert.That(tag.Children[0], Is.InstanceOf<Oob>());
+			Assert.That(((Oob) tag.Children[0]).Children[0], Is.InstanceOf<Input>());
+		});
 	}
 
 	[Test]

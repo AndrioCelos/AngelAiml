@@ -7,18 +7,18 @@ public class FirstTests {
 	[Test]
 	public void EvaluateWithZeroWords() {
 		var tag = new First(new(""));
-		Assert.AreEqual("nil", tag.Evaluate(new AimlTest().RequestProcess).ToString());
+		Assert.That(tag.Evaluate(new AimlTest().RequestProcess).ToString(), Is.EqualTo("nil"));
 	}
 
 	[Test]
 	public void EvaluateWithOneWord() {
 		var tag = new First(new("1"));
-		Assert.AreEqual("1", tag.Evaluate(new AimlTest().RequestProcess).ToString());
+		Assert.That(tag.Evaluate(new AimlTest().RequestProcess).ToString(), Is.EqualTo("1"));
 	}
 
 	[Test]
 	public void EvaluateWithMultipleWords() {
 		var tag = new First(new("1 2 3"));
-		Assert.AreEqual("1", tag.Evaluate(new AimlTest().RequestProcess).ToString());
+		Assert.That(tag.Evaluate(new AimlTest().RequestProcess).ToString(), Is.EqualTo("1"));
 	}
 }

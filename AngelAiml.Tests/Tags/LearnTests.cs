@@ -11,7 +11,7 @@ public class LearnTests {
 	public void Parse() {
 		var el = XElement.Parse("<learn><category><pattern>TEST LEARN</pattern><template>Original: <eval><input/></eval>; Current: <input/></template></category></learn>");
 		var tag = new Learn(el);
-		Assert.AreSame(el, tag.Element);
+		Assert.That(tag.Element, Is.SameAs(el));
 	}
 
 	[TestCase("<learn/>", TestName = "Parse (no category)")]
@@ -31,7 +31,7 @@ public class LearnTests {
 		tag.Evaluate(test.RequestProcess);
 
 		test.User.Requests.Add(new("TEST LEARN", test.User, test.Bot));
-		Assert.AreEqual("Original: TEST; Current: TEST LEARN", AimlTest.GetTemplate(test.User.Graphmaster, "TEST", "LEARN", "<that>", "*", "<topic>", "*").Content.Evaluate(new(new(new("TEST LEARN", test.User, test.Bot), "TEST LEARN"), 0, false)));
+		Assert.That(AimlTest.GetTemplate(test.User.Graphmaster, "TEST", "LEARN", "<that>", "*", "<topic>", "*").Content.Evaluate(new(new(new("TEST LEARN", test.User, test.Bot), "TEST LEARN"), 0, false)), Is.EqualTo("Original: TEST; Current: TEST LEARN"));
 	}
 
 	[Test]
@@ -42,7 +42,7 @@ public class LearnTests {
 		test.User.Requests.Add(new("TEST", test.User, test.Bot));
 		tag.Evaluate(test.RequestProcess);
 
-		Assert.AreEqual(xml, GetOuterXml(tag.Element));
+		Assert.That(GetOuterXml(tag.Element), Is.EqualTo(xml));
 	}
 
 	[Test]

@@ -7,6 +7,6 @@ public class IDTests {
 	[Test]
 	public void Evaluate() {
 		var tag = new ID();
-		Assert.AreEqual("tester", tag.Evaluate(new AimlTest().RequestProcess).ToString());
+		Assert.That(tag.Evaluate(new AimlTest().RequestProcess).ToString(), Is.EqualTo("tester"));
 	}
 }

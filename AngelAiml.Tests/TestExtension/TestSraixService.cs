@@ -4,9 +4,11 @@ namespace AngelAiml.Tests.TestExtension;
 
 internal class TestSraixService : ISraixService {
 	public string Process(string text, XElement element, RequestProcess process) {
-		Assert.AreEqual("arguments", text);
-		Assert.AreEqual("Sample", element.Attribute("customattr")?.Value);
-		Assert.AreEqual("var", process.GetVariable("bar"));
+		Assert.Multiple(() => {
+			Assert.That(text, Is.EqualTo("arguments"));
+			Assert.That(element.Attribute("customattr")?.Value, Is.EqualTo("Sample"));
+			Assert.That(process.GetVariable("bar"), Is.EqualTo("var"));
+		});
 		return "Success";
 	}
 }

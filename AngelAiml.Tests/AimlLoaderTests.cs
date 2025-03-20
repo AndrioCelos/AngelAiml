@@ -38,37 +38,37 @@ public class AimlLoaderTests {
 	public void AddExtensionTest() {
 		var extension = new TestExtension.TestExtension();
 		AimlLoader.AddExtension(extension);
-		Assert.AreEqual(1, extension.Initialised);
+		Assert.That(extension.Initialised, Is.EqualTo(1));
 	}
 
 	[Test]
 	public void AddExtensionsTest() {
 		AimlLoader.AddExtensions(Assembly.GetExecutingAssembly().Location);
-		Assert.AreEqual(1, TestExtension.TestExtension.instances.Single().Initialised);
+		Assert.That(TestExtension.TestExtension.instances.Single().Initialised, Is.EqualTo(1));
 	}
 
 	[Test]
 	public void AddCustomTag_ImplicitName() {
 		var test = new AimlTest();
 		var el = test.Bot.AimlLoader.ParseElement(XElement.Parse("<testcustomtag value1='Hello'><value2>world</value2></testcustomtag>"));
-		Assert.IsInstanceOf<TestCustomTag>(el);
-		Assert.AreEqual("Hello world", el.Evaluate(test.RequestProcess));
+		Assert.That(el, Is.InstanceOf<TestCustomTag>());
+		Assert.That(el.Evaluate(test.RequestProcess), Is.EqualTo("Hello world"));
 	}
 
 	[Test]
 	public void AddCustomTag_ExplicitName() {
 		var test = new AimlTest();
 		var el = test.Bot.AimlLoader.ParseElement(XElement.Parse("<custom value1='Hello'><value2>world</value2></custom>"));
-		Assert.IsInstanceOf<TestCustomTag>(el);
-		Assert.AreEqual("Hello world", el.Evaluate(test.RequestProcess));
+		Assert.That(el, Is.InstanceOf<TestCustomTag>());
+		Assert.That(el.Evaluate(test.RequestProcess), Is.EqualTo("Hello world"));
 	}
 
 	[Test]
 	public void AddCustomTag_Delegate() {
 		var test = new AimlTest();
 		var el = test.Bot.AimlLoader.ParseElement(XElement.Parse("<custom2/>"));
-		Assert.IsInstanceOf<TestCustomTag>(el);
-		Assert.AreEqual("Hello world", el.Evaluate(test.RequestProcess));
+		Assert.That(el, Is.InstanceOf<TestCustomTag>());
+		Assert.That(el.Evaluate(test.RequestProcess), Is.EqualTo("Hello world"));
 	}
 
 	[Test]
@@ -76,24 +76,26 @@ public class AimlLoaderTests {
 		AimlLoader.AddCustomMediaElement("custommedia", MediaElementType.Inline, (_, _) => new TestCustomRichMediaElement());
 		var response = new Response(new AimlTest().RequestProcess.Sentence.Request, "<custommedia/>");
 		var messages = response.ToMessages();
-		Assert.AreEqual(1, messages.Length);
-		Assert.AreEqual(1, messages[0].InlineElements.Count);
-		Assert.IsInstanceOf<TestCustomRichMediaElement>(messages[0].InlineElements[0]);
+		Assert.That(messages, Has.Length.EqualTo(1));
+		Assert.That(messages[0].InlineElements, Has.Count.EqualTo(1));
+		Assert.That(messages[0].InlineElements[0], Is.InstanceOf<TestCustomRichMediaElement>());
 	}
 
 	[Test]
 	public void AddCustomOobHandler_EmptyReplacement() {
 		var response = new Response(new AimlTest().RequestProcess.Sentence.Request, "<oob><testoob/></oob>");
 		response.ProcessOobElements();
-		Assert.AreEqual("", response.ToString());
-		Assert.AreEqual(1, oobExecuted);
+		Assert.Multiple(() => {
+			Assert.That(response.ToString(), Is.EqualTo(""));
+			Assert.That(oobExecuted, Is.EqualTo(1));
+		});
 	}
 
 	[Test]
 	public void AddCustomOobHandler_WithReplacement() {
 		var response = new Response(new AimlTest().RequestProcess.Sentence.Request, "<oob><testoob2/></oob>");
 		response.ProcessOobElements();
-		Assert.AreEqual("Sample replacement", response.ToString());
+		Assert.That(response.ToString(), Is.EqualTo("Sample replacement"));
 	}
 
 	[Test]
@@ -104,7 +106,7 @@ public class AimlLoaderTests {
 
 		var el = XElement.Parse("<sraix customattr='Sample'/>");
 		var tag = new SraiX(new(nameof(TestSraixService)), new("default"), el, new("arguments"));
-		Assert.AreEqual("Success", tag.Evaluate(test.RequestProcess));
+		Assert.That(tag.Evaluate(test.RequestProcess), Is.EqualTo("Success"));
 	}
 
 	[Test]
@@ -113,8 +115,10 @@ public class AimlLoaderTests {
 		test.Bot.LoadConfig();
 		test.Bot.AimlLoader.LoadAimlFiles();
 		var template = AimlTest.GetTemplate(test.Bot.Graphmaster, "HI", "<that>", "*", "<topic>", "*");
-		Assert.AreEqual("Hello, world!", template.Content.ToString());
-		Assert.That(template.Uri, new EndsWithConstraint("helloworld.aiml"));
+		Assert.Multiple(() => {
+			Assert.That(template.Content.ToString(), Is.EqualTo("Hello, world!"));
+			Assert.That(template.Uri, new EndsWithConstraint("helloworld.aiml"));
+		});
 	}
 
 	[Test]
@@ -124,8 +128,10 @@ public class AimlLoaderTests {
 		var test = new AimlTest();
 		test.Bot.AimlLoader.LoadAimlFiles(dir);
 		var template = AimlTest.GetTemplate(test.Bot.Graphmaster, "HI", "<that>", "*", "<topic>", "*");
-		Assert.AreEqual("Hello, world!", template.Content.ToString());
-		Assert.That(template.Uri, new EndsWithConstraint("helloworld.aiml"));
+		Assert.Multiple(() => {
+			Assert.That(template.Content.ToString(), Is.EqualTo("Hello, world!"));
+			Assert.That(template.Uri, new EndsWithConstraint("helloworld.aiml"));
+		});
 	}
 
 	[Test]
@@ -135,8 +141,10 @@ public class AimlLoaderTests {
 		var test = new AimlTest();
 		test.Bot.AimlLoader.LoadAiml(file);
 		var template = AimlTest.GetTemplate(test.Bot.Graphmaster, "HI", "<that>", "*", "<topic>", "*");
-		Assert.AreEqual("Hello, world!", template.Content.ToString());
-		Assert.That(template.Uri, new EndsWithConstraint("helloworld.aiml"));
+		Assert.Multiple(() => {
+			Assert.That(template.Content.ToString(), Is.EqualTo("Hello, world!"));
+			Assert.That(template.Uri, new EndsWithConstraint("helloworld.aiml"));
+		});
 	}
 
 	[Test]
@@ -149,7 +157,7 @@ public class AimlLoaderTests {
 		<template>Hello world!</template>
 	</category>
 </aiml>"));
-		Assert.AreEqual("Hello world!", AimlTest.GetTemplate(test.Bot.Graphmaster, "TEST", "<that>", "*", "<topic>", "*").Content.ToString());
+		Assert.That(AimlTest.GetTemplate(test.Bot.Graphmaster, "TEST", "<that>", "*", "<topic>", "*").Content.ToString(), Is.EqualTo("Hello world!"));
 	}
 
 	[Test]
@@ -166,8 +174,10 @@ public class AimlLoaderTests {
 	</category>
 </aiml>", LoadOptions.PreserveWhitespace));
 		var intermediateWhitespaceNode = AimlTest.GetTemplate(test.Bot.Graphmaster, "TEST", "<that>", "*", "<topic>", "*").Content.SkipWhile(t => t is not SR).Skip(1).First();
-		Assert.IsInstanceOf<TemplateText>(intermediateWhitespaceNode);
-		Assert.AreEqual(" ", ((TemplateText) intermediateWhitespaceNode).Text);
+		Assert.Multiple(() => {
+			Assert.That(intermediateWhitespaceNode, Is.InstanceOf<TemplateText>());
+			Assert.That(((TemplateText) intermediateWhitespaceNode).Text, Is.EqualTo(" "));
+		});
 	}
 
 	[Test]
@@ -180,7 +190,7 @@ public class AimlLoaderTests {
 		<template>Hello world!</template>
 	</category>
 </aiml>"));
-		Assert.AreEqual("Hello world!", AimlTest.GetTemplate(test.Bot.Graphmaster, "TEST", "<that>", "*", "<topic>", "*").Content.ToString());
+		Assert.That(AimlTest.GetTemplate(test.Bot.Graphmaster, "TEST", "<that>", "*", "<topic>", "*").Content.ToString(), Is.EqualTo("Hello world!"));
 	}
 
 	[Test]
@@ -195,8 +205,8 @@ public class AimlLoaderTests {
 	</category>
 </learnf>"));
 		var template = target.Children["TEST"].Children["<that>"].Children["*"].Children["<topic>"].Children["*"].Template;
-		Assert.IsNotNull(template);
-		Assert.AreEqual("Hello world!", template!.Content.ToString());
+		Assert.That(template, Is.Not.Null);
+		Assert.That(template!.Content.ToString(), Is.EqualTo("Hello world!"));
 	}
 
 	[Test]
@@ -211,7 +221,7 @@ public class AimlLoaderTests {
 		</category>
 	</topic>
 </aiml>"));
-		Assert.AreEqual("Hello world!", AimlTest.GetTemplate(test.Bot.Graphmaster, "TEST", "<that>", "*", "<topic>", "TESTING").Content.ToString());
+		Assert.That(AimlTest.GetTemplate(test.Bot.Graphmaster, "TEST", "<that>", "*", "<topic>", "TESTING").Content.ToString(), Is.EqualTo("Hello world!"));
 	}
 
 	[Test]
@@ -219,7 +229,7 @@ public class AimlLoaderTests {
 		var target = new PatternNode(StringComparer.InvariantCultureIgnoreCase);
 		var test = new AimlTest();
 		test.Bot.AimlLoader.ProcessCategory(target, XElement.Parse("<category><pattern>TEST</pattern><template>Hello world!</template></category>"));
-		Assert.AreEqual("Hello world!", AimlTest.GetTemplate(target, "TEST", "<that>", "*", "<topic>", "*").Content.ToString());
+		Assert.That(AimlTest.GetTemplate(target, "TEST", "<that>", "*", "<topic>", "*").Content.ToString(), Is.EqualTo("Hello world!"));
 	}
 
 	[Test]
@@ -227,7 +237,7 @@ public class AimlLoaderTests {
 		var target = new PatternNode(StringComparer.InvariantCultureIgnoreCase);
 		var test = new AimlTest();
 		test.Bot.AimlLoader.ProcessCategory(target, XElement.Parse("<category><pattern>TEST</pattern><template>Hello world!</template></category>"), "testing");
-		Assert.AreEqual("Hello world!", AimlTest.GetTemplate(target, "TEST", "<that>", "*", "<topic>", "TESTING").Content.ToString());
+		Assert.That(AimlTest.GetTemplate(target, "TEST", "<that>", "*", "<topic>", "TESTING").Content.ToString(), Is.EqualTo("Hello world!"));
 	}
 
 	[Test]
@@ -235,7 +245,7 @@ public class AimlLoaderTests {
 		var target = new PatternNode(StringComparer.InvariantCultureIgnoreCase);
 		var test = new AimlTest();
 		test.Bot.AimlLoader.ProcessCategory(target, XElement.Parse("<category><pattern>TEST</pattern><topic>TESTING2</topic><template>Hello world!</template></category>"), "testing");
-		Assert.AreEqual("Hello world!", AimlTest.GetTemplate(target, "TEST", "<that>", "*", "<topic>", "TESTING2").Content.ToString());
+		Assert.That(AimlTest.GetTemplate(target, "TEST", "<that>", "*", "<topic>", "TESTING2").Content.ToString(), Is.EqualTo("Hello world!"));
 	}
 
 	[Test]
@@ -251,7 +261,7 @@ public class AimlLoaderTests {
 		var target = new PatternNode(StringComparer.InvariantCultureIgnoreCase);
 		var test = new AimlTest();
 		test.Bot.AimlLoader.ProcessCategory(target, XElement.Parse("<category><pattern>TEST</pattern><that>HELLO</that><template>Hello world!</template></category>"));
-		Assert.AreEqual("Hello world!", AimlTest.GetTemplate(target, "TEST", "<that>", "HELLO", "<topic>", "*").Content.ToString());
+		Assert.That(AimlTest.GetTemplate(target, "TEST", "<that>", "HELLO", "<topic>", "*").Content.ToString(), Is.EqualTo("Hello world!"));
 	}
 
 	[Test]
@@ -275,15 +285,19 @@ public class AimlLoaderTests {
 	[Test]
 	public void ParseElement_NoContent() {
 		var el = new AimlTest().Bot.AimlLoader.ParseElement(XElement.Parse("<star/>"));
-		Assert.IsInstanceOf<Star>(el);
-		Assert.IsNull(((Star) el).Index);
+		Assert.Multiple(() => {
+			Assert.That(el, Is.InstanceOf<Star>());
+			Assert.That(((Star) el).Index, Is.Null);
+		});
 	}
 
 	[Test]
 	public void ParseElement_WithContent() {
 		var el = new AimlTest().Bot.AimlLoader.ParseElement(XElement.Parse("<srai>Hello, world!</srai>"));
-		Assert.IsInstanceOf<Srai>(el);
-		Assert.AreEqual("Hello, world!", ((Srai) el).Children.ToString());
+		Assert.Multiple(() => {
+			Assert.That(el, Is.InstanceOf<Srai>());
+			Assert.That(((Srai) el).Children.ToString(), Is.EqualTo("Hello, world!"));
+		});
 	}
 
 	[Test]
@@ -292,28 +306,34 @@ public class AimlLoaderTests {
 	[Test]
 	public void ParseElement_SpecialParserOrCustomTag() {
 		var el = new AimlTest().Bot.AimlLoader.ParseElement(XElement.Parse("<oob><foo/></oob>"));
-		Assert.IsInstanceOf<Oob>(el);
-		Assert.IsInstanceOf<Oob>(((Oob) el).Children.Single());
+		Assert.Multiple(() => {
+			Assert.That(el, Is.InstanceOf<Oob>());
+			Assert.That(((Oob) el).Children.Single(), Is.InstanceOf<Oob>());
+		});
 	}
 
 	[Test]
 	public void ParseElement_RichMediaElement() {
 		var el = new AimlTest().Bot.AimlLoader.ParseElement(XElement.Parse("<split/>"));
-		Assert.IsInstanceOf<Oob>(el);
+		Assert.That(el, Is.InstanceOf<Oob>());
 	}
 
 	[Test]
 	public void ParseElement_AttributeAsXmlAttribute() {
 		var el = new AimlTest().Bot.AimlLoader.ParseElement(XElement.Parse("<star index='2'/>"));
-		Assert.IsInstanceOf<Star>(el);
-		Assert.AreEqual("2", ((Star) el).Index?.ToString());
+		Assert.Multiple(() => {
+			Assert.That(el, Is.InstanceOf<Star>());
+			Assert.That(((Star) el).Index?.ToString(), Is.EqualTo("2"));
+		});
 	}
 
 	[Test]
 	public void ParseElement_AttributeAsXmlElement() {
 		var el = new AimlTest().Bot.AimlLoader.ParseElement(XElement.Parse("<star><index>2</index></star>"));
-		Assert.IsInstanceOf<Star>(el);
-		Assert.AreEqual("2", ((Star) el).Index?.ToString());
+		Assert.Multiple(() => {
+			Assert.That(el, Is.InstanceOf<Star>());
+			Assert.That(((Star) el).Index?.ToString(), Is.EqualTo("2"));
+		});
 	}
 
 	[Test]
@@ -331,25 +351,31 @@ public class AimlLoaderTests {
 	[Test]
 	public void ParseElement_SpecialContent() {
 		var el = new AimlTest().Bot.AimlLoader.ParseElement(XElement.Parse("<random><li>1</li><li>2</li></random>"));
-		Assert.IsInstanceOf<AngelAiml.Tags.Random>(el);
+		Assert.That(el, Is.InstanceOf<AngelAiml.Tags.Random>());
 		var random = (AngelAiml.Tags.Random) el;
-		Assert.AreEqual(2, random.Items.Length);
-		Assert.AreEqual("1", random.Items[0].Children.ToString());
-		Assert.AreEqual("2", random.Items[1].Children.ToString());
+		Assert.That(random.Items, Has.Length.EqualTo(2));
+		Assert.Multiple(() => {
+			Assert.That(random.Items[0].Children.ToString(), Is.EqualTo("1"));
+			Assert.That(random.Items[1].Children.ToString(), Is.EqualTo("2"));
+		});
 	}
 
 	[Test]
 	public void ParseElement_PassthroughXmlElement() {
 		var el = new AimlTest().Bot.AimlLoader.ParseElement(XElement.Parse("<learn><category><pattern>foo</pattern><template/></category></learn>"));
-		Assert.IsInstanceOf<Learn>(el);
-		Assert.AreEqual("foo", ((Learn) el).Element.Value);
+		Assert.Multiple(() => {
+			Assert.That(el, Is.InstanceOf<Learn>());
+			Assert.That(((Learn) el).Element.Value, Is.EqualTo("foo"));
+		});
 	}
 
 	[Test]
 	public void ParseElement_PassthroughXmlElement_Sraix() {
 		var el = XElement.Parse("<sraix service='ExternalBotService' botname='Angelina'/>");
 		var tag = new AimlTest().Bot.AimlLoader.ParseElement(el);
-		Assert.IsInstanceOf<SraiX>(tag);
-		Assert.AreSame(el, ((SraiX) tag).Element);
+		Assert.Multiple(() => {
+			Assert.That(tag, Is.InstanceOf<SraiX>());
+			Assert.That(((SraiX) tag).Element, Is.SameAs(el));
+		});
 	}
 }

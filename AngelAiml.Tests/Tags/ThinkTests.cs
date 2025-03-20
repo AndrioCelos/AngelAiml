@@ -8,7 +8,9 @@ public class ThinkTests {
 	public void Evaluate() {
 		var test = new AimlTest();
 		var tag = new Think(new(new AngelAiml.Tags.Set(new("foo"), false, new("predicate"))));
-		Assert.IsEmpty(tag.Evaluate(test.RequestProcess));
-		Assert.AreEqual("predicate", test.User.GetPredicate("foo"));
+		Assert.Multiple(() => {
+			Assert.That(tag.Evaluate(test.RequestProcess), Is.Empty);
+			Assert.That(test.User.GetPredicate("foo"), Is.EqualTo("predicate"));
+		});
 	}
 }

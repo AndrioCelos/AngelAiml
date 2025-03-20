@@ -14,43 +14,43 @@ public class StarTests {
 	[Test]
 	public void ParseWithIndex() {
 		var tag = new Star(new("2"));
-		Assert.AreEqual("2", tag.Index?.ToString());
+		Assert.That(tag.Index?.ToString(), Is.EqualTo("2"));
 	}
 
 	[Test]
 	public void ParseWithDefault() {
 		var tag = new Star(null);
-		Assert.IsNull(tag.Index);
+		Assert.That(tag.Index, Is.Null);
 	}
 
 	[Test]
 	public void EvaluateWithIndex() {
 		var tag = new Star(new("2"));
-		Assert.AreEqual("bar baz", tag.Evaluate(GetTest().RequestProcess).ToString());
+		Assert.That(tag.Evaluate(GetTest().RequestProcess).ToString(), Is.EqualTo("bar baz"));
 	}
 
 	[Test]
 	public void EvaluateWithDefault() {
 		var tag = new Star(null);
-		Assert.AreEqual("foo", tag.Evaluate(GetTest().RequestProcess).ToString());
+		Assert.That(tag.Evaluate(GetTest().RequestProcess).ToString(), Is.EqualTo("foo"));
 	}
 
 	[Test]
 	public void EvaluateWithIndexOutOfRange() {
 		var tag = new Star(new("3"));
-		Assert.AreEqual("nil", tag.Evaluate(GetTest().RequestProcess).ToString());
+		Assert.That(tag.Evaluate(GetTest().RequestProcess).ToString(), Is.EqualTo("nil"));
 	}
 
 	[Test]
 	public void EvaluateWithInvalidIndex() {
 		var test = GetTest();
 		var tag = new Star(new("0"));
-		Assert.AreEqual("nil", test.AssertWarning(() => tag.Evaluate(test.RequestProcess).ToString()));
+		Assert.That(test.AssertWarning(() => tag.Evaluate(test.RequestProcess).ToString()), Is.EqualTo("nil"));
 	}
 
 	[Test]
 	public void EvaluateWithDefaultIndexAndNoWildcards() {
 		var tag = new Star(null);
-		Assert.AreEqual("nil", tag.Evaluate(new AimlTest().RequestProcess).ToString());
+		Assert.That(tag.Evaluate(new AimlTest().RequestProcess).ToString(), Is.EqualTo("nil"));
 	}
 }

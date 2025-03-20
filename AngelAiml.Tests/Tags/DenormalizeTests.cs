@@ -9,6 +9,6 @@ public class DenormalizeTests {
 		var test = new AimlTest();
 		test.Bot.Config.DenormalSubstitutions.Add(new(" foo ", " bar "));
 		var tag = new Denormalize(new("foo"));
-		Assert.AreEqual("bar", tag.Evaluate(test.RequestProcess).ToString());
+		Assert.That(tag.Evaluate(test.RequestProcess).ToString(), Is.EqualTo("bar"));
 	}
 }

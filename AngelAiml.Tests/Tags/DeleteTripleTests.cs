@@ -21,25 +21,31 @@ public class DeleteTripleTests {
 	[Test]
 	public void ParseComplete() {
 		var tag = new DeleteTriple(new("foo"), new("r"), new("bar"));
-		Assert.AreEqual("foo", tag.Subject.ToString());
-		Assert.AreEqual("r", tag.Predicate?.ToString());
-		Assert.AreEqual("bar", tag.Object?.ToString());
+		Assert.Multiple(() => {
+			Assert.That(tag.Subject.ToString(), Is.EqualTo("foo"));
+			Assert.That(tag.Predicate?.ToString(), Is.EqualTo("r"));
+			Assert.That(tag.Object?.ToString(), Is.EqualTo("bar"));
+		});
 	}
 
 	[Test]
 	public void ParseSubjectAndPredicateOnly() {
 		var tag = new DeleteTriple(new("foo"), new("r"), null);
-		Assert.AreEqual("foo", tag.Subject.ToString());
-		Assert.AreEqual("r", tag.Predicate?.ToString());
-		Assert.IsNull(tag.Object);
+		Assert.Multiple(() => {
+			Assert.That(tag.Subject.ToString(), Is.EqualTo("foo"));
+			Assert.That(tag.Predicate?.ToString(), Is.EqualTo("r"));
+		});
+		Assert.That(tag.Object, Is.Null);
 	}
 
 	[Test]
 	public void ParseSubjectOnly() {
 		var tag = new DeleteTriple(new("foo"), null, null);
-		Assert.AreEqual("foo", tag.Subject.ToString());
-		Assert.IsNull(tag.Predicate);
-		Assert.IsNull(tag.Object);
+		Assert.Multiple(() => {
+			Assert.That(tag.Subject.ToString(), Is.EqualTo("foo"));
+			Assert.That(tag.Predicate, Is.Null);
+			Assert.That(tag.Object, Is.Null);
+		});
 	}
 
 	[Test]
@@ -47,7 +53,7 @@ public class DeleteTripleTests {
 		var test = GetTest();
 		var tag = new DeleteTriple(new("Alice"), new("friendOf"), new("Bob"));
 		tag.Evaluate(test.RequestProcess);
-		Assert.AreEqual(8, test.Bot.Triples.Count);
+		Assert.That(test.Bot.Triples, Has.Count.EqualTo(8));
 	}
 
 	[Test]
@@ -55,7 +61,7 @@ public class DeleteTripleTests {
 		var test = GetTest();
 		var tag = new DeleteTriple(new("Bob"), new("friendOf"), new("Erin"));
 		tag.Evaluate(test.RequestProcess);
-		Assert.AreEqual(9, test.Bot.Triples.Count);
+		Assert.That(test.Bot.Triples, Has.Count.EqualTo(9));
 	}
 
 	[Test]
@@ -63,7 +69,7 @@ public class DeleteTripleTests {
 		var test = GetTest();
 		var tag = new DeleteTriple(new("Alice"), new("friendOf"), null);
 		tag.Evaluate(test.RequestProcess);
-		Assert.AreEqual(6, test.Bot.Triples.Count);
+		Assert.That(test.Bot.Triples, Has.Count.EqualTo(6));
 	}
 
 	[Test]
@@ -71,6 +77,6 @@ public class DeleteTripleTests {
 		var test = GetTest();
 		var tag = new DeleteTriple(new("Alice"), null, null);
 		tag.Evaluate(test.RequestProcess);
-		Assert.AreEqual(5, test.Bot.Triples.Count);
+		Assert.That(test.Bot.Triples, Has.Count.EqualTo(5));
 	}
 }

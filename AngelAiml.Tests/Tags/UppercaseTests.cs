@@ -7,6 +7,6 @@ public class UppercaseTests {
 	[Test]
 	public void Evaluate() {
 		var tag = new Uppercase(new("hello WORLD says I."));
-		Assert.AreEqual("HELLO WORLD SAYS I.", tag.Evaluate(new AimlTest().RequestProcess).ToString());
+		Assert.That(tag.Evaluate(new AimlTest().RequestProcess).ToString(), Is.EqualTo("HELLO WORLD SAYS I."));
 	}
 }

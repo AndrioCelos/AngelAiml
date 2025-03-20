@@ -7,36 +7,46 @@ public class ResponseTests {
 	[Test]
 	public void GetLastSentenceTest() {
 		var subject = new Response(new AimlTest().RequestProcess.Sentence.Request, "Hello, world! This is a test.");
-		Assert.AreEqual("This is a test.", subject.GetLastSentence());
-		Assert.AreEqual("This is a test.", subject.GetLastSentence(1));
-		Assert.AreEqual("Hello, world!", subject.GetLastSentence(2));
+		Assert.Multiple(() => {
+			Assert.That(subject.GetLastSentence(), Is.EqualTo("This is a test."));
+			Assert.That(subject.GetLastSentence(1), Is.EqualTo("This is a test."));
+			Assert.That(subject.GetLastSentence(2), Is.EqualTo("Hello, world!"));
+		});
 	}
 
 	[Test]
 	public void ToMessages_Button_PostbackTextOnly() {
 		var subject = new Response(new AimlTest().RequestProcess.Sentence.Request, "Hello, world!<split/><list><item>This is a test.</item></list><button>Hello!</button>");
 		var messages = subject.ToMessages();
-		Assert.AreEqual(2, messages.Length);
+		Assert.That(messages, Has.Length.EqualTo(2));
 
-		Assert.AreEqual(1, messages[0].InlineElements.Count);
-		Assert.IsInstanceOf<MediaText>(messages[0].InlineElements[0]);
-		Assert.AreEqual("Hello, world!", ((MediaText) messages[0].InlineElements[0]).Text);
-		Assert.IsInstanceOf<Split>(messages[0].Separator);
+		Assert.That(messages[0].InlineElements, Has.Count.EqualTo(1));
+		Assert.Multiple(() => {
+			Assert.That(messages[0].InlineElements[0], Is.InstanceOf<MediaText>());
+			Assert.That(((MediaText) messages[0].InlineElements[0]).Text, Is.EqualTo("Hello, world!"));
+			Assert.That(messages[0].Separator, Is.InstanceOf<Split>());
 
-		Assert.AreEqual(1, messages[1].InlineElements.Count);
-		Assert.IsInstanceOf<Media.List>(messages[1].InlineElements[0]);
-		Assert.AreEqual(1, messages[1].BlockElements.Count);
-		Assert.IsInstanceOf<Button>(messages[1].BlockElements[0]);
-		Assert.IsNull(messages[1].Separator);
+			Assert.That(messages[1].InlineElements, Has.Count.EqualTo(1));
+		});
+		Assert.Multiple(() => {
+			Assert.That(messages[1].InlineElements[0], Is.InstanceOf<Media.List>());
+			Assert.That(messages[1].BlockElements, Has.Count.EqualTo(1));
+		});
+		Assert.Multiple(() => {
+			Assert.That(messages[1].BlockElements[0], Is.InstanceOf<Button>());
+			Assert.That(messages[1].Separator, Is.Null);
+		});
 	}
 
 	[Test]
 	public void ToMessages() {
 		var subject = new Response(new AimlTest().RequestProcess.Sentence.Request, "Hello, world! <button>Hello!</button>");
 		var messages = subject.ToMessages();
-		Assert.IsInstanceOf<Button>(messages[0].BlockElements[0]);
-		Assert.AreEqual("Hello!", ((Button) messages[0].BlockElements[0]).Text);
-		Assert.AreEqual("Hello!", ((Button) messages[0].BlockElements[0]).Postback);
-		Assert.IsNull(((Button) messages[0].BlockElements[0]).Url);
+		Assert.That(messages[0].BlockElements[0], Is.InstanceOf<Button>());
+		Assert.Multiple(() => {
+			Assert.That(((Button) messages[0].BlockElements[0]).Text, Is.EqualTo("Hello!"));
+			Assert.That(((Button) messages[0].BlockElements[0]).Postback, Is.EqualTo("Hello!"));
+		});
+		Assert.That(((Button) messages[0].BlockElements[0]).Url, Is.Null);
 	}
 }

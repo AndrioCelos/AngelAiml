@@ -6,17 +6,17 @@ public class SetTests {
 	[Test]
 	public void ParseWithName() {
 		var tag = new AngelAiml.Tags.Set(name: new("foo"), var: null, children: new("predicate"));
-		Assert.AreEqual("foo", tag.Key.ToString());
-		Assert.IsFalse(tag.LocalVar);
-		Assert.AreEqual("predicate", tag.Children.ToString());
+		Assert.That(tag.Key.ToString(), Is.EqualTo("foo"));
+		Assert.That(tag.LocalVar, Is.False);
+		Assert.That(tag.Children.ToString(), Is.EqualTo("predicate"));
 	}
 
 	[Test]
 	public void ParseWithVar() {
 		var tag = new AngelAiml.Tags.Set(name: null, var: new("bar"), children: new("variable"));
-		Assert.AreEqual("bar", tag.Key.ToString());
-		Assert.IsTrue(tag.LocalVar);
-		Assert.AreEqual("variable", tag.Children.ToString());
+		Assert.That(tag.Key.ToString(), Is.EqualTo("bar"));
+		Assert.That(tag.LocalVar, Is.True);
+		Assert.That(tag.Children.ToString(), Is.EqualTo("variable"));
 	}
 
 	[Test]
@@ -33,16 +33,20 @@ public class SetTests {
 	public void EvaluateWithName() {
 		var test = new AimlTest();
 		var tag = new AngelAiml.Tags.Set(new("foo"), false, new("predicate"));
-		Assert.AreEqual("predicate", tag.Evaluate(test.RequestProcess));
-		Assert.AreEqual("predicate", test.User.GetPredicate("foo"));
+		Assert.Multiple(() => {
+			Assert.That(tag.Evaluate(test.RequestProcess), Is.EqualTo("predicate"));
+			Assert.That(test.User.GetPredicate("foo"), Is.EqualTo("predicate"));
+		});
 	}
 
 	[Test]
 	public void EvaluateWithVar() {
 		var test = new AimlTest();
 		var tag = new AngelAiml.Tags.Set(new("bar"), true, new("variable"));
-		Assert.AreEqual("variable", tag.Evaluate(test.RequestProcess));
-		Assert.AreEqual("variable", test.RequestProcess.GetVariable("bar"));
+		Assert.Multiple(() => {
+			Assert.That(tag.Evaluate(test.RequestProcess), Is.EqualTo("variable"));
+			Assert.That(test.RequestProcess.GetVariable("bar"), Is.EqualTo("variable"));
+		});
 	}
 
 	[Test]
@@ -52,8 +56,8 @@ public class SetTests {
 		test.Bot.Config.UnbindPredicatesWithDefaultValue = true;
 		test.User.Predicates["foo"] = "bar";
 		var tag = new AngelAiml.Tags.Set(new("foo"), false, new("default"));
-		Assert.AreEqual("default", tag.Evaluate(test.RequestProcess));
-		Assert.IsFalse(test.User.Predicates.ContainsKey("foo"));
+		Assert.That(tag.Evaluate(test.RequestProcess), Is.EqualTo("default"));
+		Assert.That(test.User.Predicates.ContainsKey("foo"), Is.False);
 	}
 
 	[Test]
@@ -62,8 +66,8 @@ public class SetTests {
 		test.Bot.Config.UnbindPredicatesWithDefaultValue = true;
 		test.User.Predicates["foo"] = "bar";
 		var tag = new AngelAiml.Tags.Set(new("foo"), false, new("unknown"));
-		Assert.AreEqual("unknown", tag.Evaluate(test.RequestProcess));
-		Assert.IsFalse(test.User.Predicates.ContainsKey("foo"));
+		Assert.That(tag.Evaluate(test.RequestProcess), Is.EqualTo("unknown"));
+		Assert.That(test.User.Predicates.ContainsKey("foo"), Is.False);
 	}
 
 	[Test]
@@ -72,7 +76,7 @@ public class SetTests {
 		test.Bot.Config.UnbindPredicatesWithDefaultValue = true;
 		test.RequestProcess.Variables["bar"] = "baz";
 		var tag = new AngelAiml.Tags.Set(new("bar"), true, new("unknown"));
-		Assert.AreEqual("unknown", tag.Evaluate(test.RequestProcess));
-		Assert.IsFalse(test.RequestProcess.Variables.ContainsKey("bar"));
+		Assert.That(tag.Evaluate(test.RequestProcess), Is.EqualTo("unknown"));
+		Assert.That(test.RequestProcess.Variables.ContainsKey("bar"), Is.False);
 	}
 }

@@ -7,9 +7,11 @@ public class AddTripleTests {
 	[Test]
 	public void Initialise() {
 		var tag = new AddTriple(new("foo"), new("r"), new("bar"));
-		Assert.AreEqual("foo", tag.Subject.ToString());
-		Assert.AreEqual("r", tag.Predicate.ToString());
-		Assert.AreEqual("bar", tag.Object.ToString());
+		Assert.Multiple(() => {
+			Assert.That(tag.Subject.ToString(), Is.EqualTo("foo"));
+			Assert.That(tag.Predicate.ToString(), Is.EqualTo("r"));
+			Assert.That(tag.Object.ToString(), Is.EqualTo("bar"));
+		});
 	}
 
 	[Test]
@@ -17,7 +19,7 @@ public class AddTripleTests {
 		var test = new AimlTest();
 		var tag = new AddTriple(new("foo"), new("r"), new("bar"));
 		tag.Evaluate(test.RequestProcess);
-		Assert.AreEqual("{ Subject = foo, Predicate = r, Object = bar }", test.Bot.Triples.Single().ToString());
+		Assert.That(test.Bot.Triples.Single().ToString(), Is.EqualTo("{ Subject = foo, Predicate = r, Object = bar }"));
 	}
 
 	[Test]
@@ -26,7 +28,7 @@ public class AddTripleTests {
 		test.Bot.Triples.Add("foo", "r", "bar");
 		var tag = new AddTriple(new("foo"), new("r"), new("bar"));
 		tag.Evaluate(test.RequestProcess);
-		Assert.AreEqual("{ Subject = foo, Predicate = r, Object = bar }", test.Bot.Triples.Single().ToString());
+		Assert.That(test.Bot.Triples.Single().ToString(), Is.EqualTo("{ Subject = foo, Predicate = r, Object = bar }"));
 	}
 
 	[Test]
@@ -34,10 +36,10 @@ public class AddTripleTests {
 		var test = new AimlTest();
 		var tag = new AddTriple(new(" "), new("r"), new("bar"));
 		test.AssertWarning(() => tag.Evaluate(test.RequestProcess));
-		Assert.IsEmpty(test.Bot.Triples);
+		Assert.That(test.Bot.Triples, Is.Empty);
 		tag = new AddTriple(new("?foo"), new("r"), new("bar"));
 		test.AssertWarning(() => tag.Evaluate(test.RequestProcess));
-		Assert.IsEmpty(test.Bot.Triples);
+		Assert.That(test.Bot.Triples, Is.Empty);
 	}
 
 	[Test]
@@ -45,10 +47,10 @@ public class AddTripleTests {
 		var test = new AimlTest();
 		var tag = new AddTriple(new("foo"), new(" "), new("bar"));
 		test.AssertWarning(() => tag.Evaluate(test.RequestProcess));
-		Assert.IsEmpty(test.Bot.Triples);
+		Assert.That(test.Bot.Triples, Is.Empty);
 		tag = new AddTriple(new("foo"), new("?r"), new("bar"));
 		test.AssertWarning(() => tag.Evaluate(test.RequestProcess));
-		Assert.IsEmpty(test.Bot.Triples);
+		Assert.That(test.Bot.Triples, Is.Empty);
 	}
 
 	[Test]
@@ -56,9 +58,9 @@ public class AddTripleTests {
 		var test = new AimlTest();
 		var tag = new AddTriple(new("foo"), new("r"), new(" "));
 		test.AssertWarning(() => tag.Evaluate(test.RequestProcess));
-		Assert.IsEmpty(test.Bot.Triples);
+		Assert.That(test.Bot.Triples, Is.Empty);
 		tag = new AddTriple(new("foo"), new("r"), new("?bar"));
 		test.AssertWarning(() => tag.Evaluate(test.RequestProcess));
-		Assert.IsEmpty(test.Bot.Triples);
+		Assert.That(test.Bot.Triples, Is.Empty);
 	}
 }

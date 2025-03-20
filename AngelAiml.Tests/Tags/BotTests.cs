@@ -6,7 +6,7 @@ public class BotTests {
 	[Test]
 	public void Initialise() {
 		var tag = new AngelAiml.Tags.Bot(new("foo"));
-		Assert.AreEqual("foo", tag.Name.ToString());
+		Assert.That(tag.Name.ToString(), Is.EqualTo("foo"));
 	}
 
 	[Test]
@@ -15,13 +15,13 @@ public class BotTests {
 		test.Bot.Properties["foo"] = "test";
 
 		var tag = new AngelAiml.Tags.Bot(new("foo"));
-		Assert.AreEqual("test", tag.Evaluate(test.RequestProcess).ToString());
+		Assert.That(tag.Evaluate(test.RequestProcess).ToString(), Is.EqualTo("test"));
 	}
 
 	[Test]
 	public void EvaluateWithUnboundProperty() {
 		var test = new AimlTest();
 		var tag = new AngelAiml.Tags.Bot(new("bar"));
-		Assert.AreEqual("unknown", tag.Evaluate(test.RequestProcess).ToString());
+		Assert.That(tag.Evaluate(test.RequestProcess).ToString(), Is.EqualTo("unknown"));
 	}
 }

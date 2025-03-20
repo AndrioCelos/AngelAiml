@@ -18,7 +18,7 @@ public class SRTests {
 		test.RequestProcess.star.Add("test");
 
 		var tag = new SR();
-		Assert.AreEqual("Hello world!", tag.Evaluate(test.RequestProcess));
+		Assert.That(tag.Evaluate(test.RequestProcess), Is.EqualTo("Hello world!"));
 	}
 
 	[Test]

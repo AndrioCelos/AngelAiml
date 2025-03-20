@@ -6,25 +6,27 @@ public class MapTests {
 	[Test]
 	public void Parse() {
 		var tag = new AngelAiml.Tags.Map(new("successor"), new("0"));
-		Assert.AreEqual("successor", tag.Name.ToString());
-		Assert.AreEqual("0", tag.Children.ToString());
+		Assert.Multiple(() => {
+			Assert.That(tag.Name.ToString(), Is.EqualTo("successor"));
+			Assert.That(tag.Children.ToString(), Is.EqualTo("0"));
+		});
 	}
 
 	[Test]
 	public void Evaluate() {
 		var tag = new AngelAiml.Tags.Map(new("successor"), new("0"));
-		Assert.AreEqual("1", tag.Evaluate(new AimlTest().RequestProcess));
+		Assert.That(tag.Evaluate(new AimlTest().RequestProcess), Is.EqualTo("1"));
 	}
 
 	[Test]
 	public void EvaluateWithUnknownEntry() {
 		var tag = new AngelAiml.Tags.Map(new("successor"), new("foo"));
-		Assert.AreEqual("unknown", tag.Evaluate(new AimlTest().RequestProcess));
+		Assert.That(tag.Evaluate(new AimlTest().RequestProcess), Is.EqualTo("unknown"));
 	}
 
 	[Test]
 	public void EvaluateWithUnknownMap() {
 		var tag = new AngelAiml.Tags.Map(new("foo"), new("0"));
-		Assert.AreEqual("unknown", tag.Evaluate(new AimlTest().RequestProcess));
+		Assert.That(tag.Evaluate(new AimlTest().RequestProcess), Is.EqualTo("unknown"));
 	}
 }

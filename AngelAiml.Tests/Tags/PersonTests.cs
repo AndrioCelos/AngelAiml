@@ -9,6 +9,6 @@ public class PersonTests {
 		var test = new AimlTest();
 		test.Bot.Config.PersonSubstitutions.Add(new(" me ", " you "));
 		var tag = new Person(new("It is me"));
-		Assert.AreEqual("It is you", tag.Evaluate(test.RequestProcess).ToString());
+		Assert.That(tag.Evaluate(test.RequestProcess).ToString(), Is.EqualTo("It is you"));
 	}
 }

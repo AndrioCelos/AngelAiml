@@ -14,17 +14,21 @@ public class GetTests {
 	[Test]
 	public void ParseWithName() {
 		var tag = new Get(name: new("foo"), var: null, tuple: null);
-		Assert.AreEqual("foo", tag.Key.ToString());
-		Assert.IsNull(tag.TupleString);
-		Assert.IsFalse(tag.LocalVar);
+		Assert.Multiple(() => {
+			Assert.That(tag.Key.ToString(), Is.EqualTo("foo"));
+			Assert.That(tag.TupleString, Is.Null);
+		});
+		Assert.That(tag.LocalVar, Is.False);
 	}
 
 	[Test]
 	public void ParseWithVar() {
 		var tag = new Get(name: null, var: new("bar"), tuple: null);
-		Assert.AreEqual("bar", tag.Key.ToString());
-		Assert.IsNull(tag.TupleString);
-		Assert.IsTrue(tag.LocalVar);
+		Assert.Multiple(() => {
+			Assert.That(tag.Key.ToString(), Is.EqualTo("bar"));
+			Assert.That(tag.TupleString, Is.Null);
+		});
+		Assert.That(tag.LocalVar, Is.True);
 	}
 
 	[Test]
@@ -35,8 +39,10 @@ public class GetTests {
 	[Test]
 	public void ParseWithTupleVar() {
 		var tag = new Get(name: null, var: new("?x"), tuple: new("tuple"));
-		Assert.AreEqual("?x", tag.Key.ToString());
-		Assert.AreEqual("tuple", tag.TupleString?.ToString());
+		Assert.Multiple(() => {
+			Assert.That(tag.Key.ToString(), Is.EqualTo("?x"));
+			Assert.That(tag.TupleString?.ToString(), Is.EqualTo("tuple"));
+		});
 	}
 
 	[Test]
@@ -52,42 +58,42 @@ public class GetTests {
 	[Test]
 	public void EvaluateWithBoundPredicate() {
 		var tag = new Get(new("foo"), null, false);
-		Assert.AreEqual("sample predicate", tag.Evaluate(GetTest().RequestProcess));
+		Assert.That(tag.Evaluate(GetTest().RequestProcess), Is.EqualTo("sample predicate"));
 	}
 
 	[Test]
 	public void EvaluateWithUnboundPredicateWithDefault() {
 		var tag = new Get(new("bar"), null, false);
-		Assert.AreEqual("sample default", tag.Evaluate(GetTest().RequestProcess));
+		Assert.That(tag.Evaluate(GetTest().RequestProcess), Is.EqualTo("sample default"));
 	}
 
 	[Test]
 	public void EvaluateWithUnboundPredicate() {
 		var tag = new Get(new("baz"), null, false);
-		Assert.AreEqual("unknown", tag.Evaluate(GetTest().RequestProcess));
+		Assert.That(tag.Evaluate(GetTest().RequestProcess), Is.EqualTo("unknown"));
 	}
 
 	[Test]
 	public void EvaluateWithBoundLocalVariable() {
 		var tag = new Get(new("bar"), null, true);
-		Assert.AreEqual("sample local", tag.Evaluate(GetTest().RequestProcess));
+		Assert.That(tag.Evaluate(GetTest().RequestProcess), Is.EqualTo("sample local"));
 	}
 
 	[Test]
 	public void EvaluateWithUnboundLocalVariable() {
 		var tag = new Get(new("foo"), null, true);
-		Assert.AreEqual("unknown", tag.Evaluate(GetTest().RequestProcess));
+		Assert.That(tag.Evaluate(GetTest().RequestProcess), Is.EqualTo("unknown"));
 	}
 
 	[Test]
 	public void EvaluateWithBoundTupleVariable() {
 		var tag = new Get(new("?x"), new(new Tuple("?y", "", new("?x", "sample tuple")).Encode(["?x", "?y"])), true);
-		Assert.AreEqual("sample tuple", tag.Evaluate(GetTest().RequestProcess));
+		Assert.That(tag.Evaluate(GetTest().RequestProcess), Is.EqualTo("sample tuple"));
 	}
 
 	[Test]
 	public void EvaluateWithUnboundTupleVariable() {
 		var tag = new Get(new("?z"), new(new Tuple("?y", "", new("?x", "sample tuple")).Encode(["?x", "?y"])), true);
-		Assert.AreEqual("unknown", tag.Evaluate(GetTest().RequestProcess));
+		Assert.That(tag.Evaluate(GetTest().RequestProcess), Is.EqualTo("unknown"));
 	}
 }
