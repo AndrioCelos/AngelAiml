@@ -40,7 +40,7 @@ public partial class Bot {
 	public void OnPostbackResponse(PostbackResponseEventArgs e) => PostbackResponse?.Invoke(this, e);
 
 	internal readonly Random Random = new();
-	internal readonly ILoggerFactory? loggerFactory;
+	public ILoggerFactory LoggerFactory { get; }
 	internal readonly ILogger<Bot> logger;
 	internal readonly Dictionary<Type, ILogger> loggers = [];
 	private int? vocabulary;
@@ -49,8 +49,8 @@ public partial class Bot {
 	public Bot(ILoggerFactory loggerFactory) : this("config", loggerFactory) { }
 	public Bot(string configDirectory) : this(configDirectory, null) { }
 	public Bot(string configDirectory, ILoggerFactory? loggerFactory) {
-		this.loggerFactory = loggerFactory;
-		logger = loggerFactory?.CreateLogger<Bot>() ?? NullLogger<Bot>.Instance;
+		this.LoggerFactory = loggerFactory ?? NullLoggerFactory.Instance;
+		logger = loggerFactory.CreateLogger<Bot>();
 		AimlLoader = new(this);
 		ConfigDirectory = configDirectory;
 
@@ -252,9 +252,9 @@ public partial class Bot {
 
 	internal ILogger GetLogger(Type categoryType) {
 		if (loggers.TryGetValue(categoryType, out var logger)) return logger;
-		if (loggerFactory is null) return this.logger;
+		if (LoggerFactory is null) return this.logger;
 
-		logger = loggerFactory.CreateLogger(categoryType.FullName!);
+		logger = LoggerFactory.CreateLogger(categoryType.FullName!);
 		loggers[categoryType] = logger;
 		return logger;
 	}

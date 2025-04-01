@@ -13,7 +13,7 @@ public delegate IMediaElement MediaElementParser(XElement element, Response resp
 
 public partial class AimlLoader(Bot bot) {
 	private readonly Bot bot = bot;
-	private readonly ILogger logger = bot.loggerFactory?.CreateLogger<AimlLoader>() ?? NullLogger<AimlLoader>.Instance;
+	private readonly ILogger logger = bot.LoggerFactory?.CreateLogger<AimlLoader>() ?? NullLogger<AimlLoader>.Instance;
 
 	internal static readonly Dictionary<string, TemplateTagParser> tags = new(StringComparer.InvariantCultureIgnoreCase) {
 		// Elements that the reflection method can't handle
